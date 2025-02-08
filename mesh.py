@@ -1,6 +1,7 @@
 import math
+import random
 import pygame
-from hexagon import Hexagon
+from hexagon import PlantHexagon, GroundHexagon
 
 class HexMesh:
     def __init__(self, num_columns, num_rows, display_width, display_height):
@@ -21,8 +22,12 @@ class HexMesh:
                 else:
                     cy = offset_y + a * math.sqrt(3) + j * (a * math.sqrt(3))
                 
-                # Create a Hexagon instance from the imported class
-                hexagon = Hexagon(cx, cy, a)
+                # Randomly choose between a plant hexagon and ground hexagon
+                if random.random() < 0.5:
+                    hexagon = PlantHexagon(cx, cy, a)
+                else:
+                    hexagon = GroundHexagon(cx, cy, a)
+                
                 self.hexagons.append(hexagon)
 
     def update(self, t):
