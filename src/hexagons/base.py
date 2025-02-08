@@ -44,10 +44,11 @@ class Hexagon:
         """
         pass
 
-    def draw(self, screen: pygame.Surface) -> None:
+    def draw(self, screen: pygame.Surface, show_grid: bool = True) -> None:
         """Draw the hexagonal cell on the screen.
 
         Args:
             screen (pygame.Surface): Pygame surface to draw on
+            show_grid (bool, optional): Whether to show grid lines. Defaults to True.
         """
         pass 

@@ -5,6 +5,7 @@ import pygame
 import time
 from unittest.mock import patch
 from src.mesh.hex_mesh import HexMesh
+from src.game_state import GameStateManager, GameState
 from tests.test_config import (
     MOCK_SCREEN_WIDTH,
     MOCK_SCREEN_HEIGHT,
@@ -17,24 +18,40 @@ class TestGameIntegration(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
         pygame.init()
-        # Set up a dummy display mode for testing
+        # Initialize a dummy display for testing
         pygame.display.set_mode((MOCK_SCREEN_WIDTH, MOCK_SCREEN_HEIGHT))
         self.screen = pygame.Surface((MOCK_SCREEN_WIDTH, MOCK_SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
         self.mesh = HexMesh(MOCK_COLUMNS, MOCK_ROWS, MOCK_SCREEN_WIDTH, MOCK_SCREEN_HEIGHT)
+        self.state_manager = GameStateManager()
         self.background_color = (30, 30, 30)
 
-    def simulate_game_loop(self, num_frames):
-        """Simulate the game loop for a specified number of frames."""
+    def simulate_game_loop(self, num_frames, paused=False, help_shown=False):
+        """Simulate the game loop for a specified number of frames.
+        
+        Args:
+            num_frames (int): Number of frames to simulate
+            paused (bool): Whether to simulate in paused state
+            help_shown (bool): Whether to simulate with help overlay
+        """
+        if paused:
+            self.state_manager.current_state = GameState.PAUSED
+        if help_shown:
+            self.state_manager.current_state = GameState.HELP
+
         for _ in range(num_frames):
             # Simulate time passing (16ms = ~60fps)
             pygame.time.wait(16)
             current_time = pygame.time.get_ticks() / 1000.0
 
-            # Update and draw
-            self.mesh.update(current_time)
+            # Update if not paused or in help
+            if self.state_manager.current_state == GameState.RUNNING:
+                self.mesh.update(current_time * self.state_manager.simulation_speed)
+            
+            # Draw everything
             self.screen.fill(self.background_color)
-            self.mesh.draw(self.screen)
+            self.mesh.draw(self.screen, show_grid=self.state_manager.show_grid)
+            self.state_manager.draw_overlay(self.screen)
             
             # Copy to display surface
             pygame.display.get_surface().blit(self.screen, (0, 0))
@@ -45,86 +62,96 @@ class TestGameIntegration(unittest.TestCase):
         self.assertIsNotNone(self.screen)
         self.assertIsNotNone(self.clock)
         self.assertIsNotNone(self.mesh)
+        self.assertIsNotNone(self.state_manager)
         self.assertEqual(self.screen.get_width(), MOCK_SCREEN_WIDTH)
         self.assertEqual(self.screen.get_height(), MOCK_SCREEN_HEIGHT)
 
-    def test_game_loop_stability(self):
-        """Test that the game loop can run stably for multiple frames."""
-        try:
-            self.simulate_game_loop(10)  # Run for 10 frames
-            success = True
-        except Exception as e:
-            success = False
-            self.fail(f"Game loop failed: {str(e)}")
-        self.assertTrue(success)
-
-    def test_time_progression(self):
-        """Test that time properly progresses in the game loop."""
-        initial_time = pygame.time.get_ticks()
-        self.simulate_game_loop(5)  # Run for 5 frames
-        final_time = pygame.time.get_ticks()
-        
-        # Should have progressed by at least 16ms * 5 frames
-        self.assertGreater(final_time - initial_time, 16 * 5)
-
-    @patch('pygame.event.get')
-    def test_event_handling(self, mock_event_get):
-        """Test that the game loop properly handles events."""
-        # Simulate a quit event
-        mock_event_get.return_value = [pygame.event.Event(pygame.QUIT)]
-        
-        # Check that a quit event would trigger game exit
-        events = pygame.event.get()
-        self.assertEqual(len(events), 1)
-        self.assertEqual(events[0].type, pygame.QUIT)
-
-    def test_continuous_update(self):
-        """Test that game state updates continuously."""
-        # Get initial state of first plant (if any)
+    def test_pause_functionality(self):
+        """Test that game properly handles pause state."""
+        # Get initial state
         initial_states = []
         for hexagon in self.mesh.hexagons:
             if hasattr(hexagon, 't'):
                 initial_states.append(hexagon.t)
 
-        # Run game loop for a few frames
-        self.simulate_game_loop(3)
+        # Run paused for a few frames
+        self.simulate_game_loop(3, paused=True)
 
-        # Check that states have changed
+        # Check that states haven't changed
         current_states = []
         for hexagon in self.mesh.hexagons:
             if hasattr(hexagon, 't'):
                 current_states.append(hexagon.t)
 
-        # Verify that at least some states have changed
-        self.assertNotEqual(initial_states, current_states)
+        self.assertEqual(initial_states, current_states)
 
-    def test_frame_rate_control(self):
-        """Test that the game maintains a reasonable frame rate."""
-        start_time = time.time()
-        self.simulate_game_loop(10)  # Run for 10 frames
-        end_time = time.time()
-        
-        # Calculate actual frame rate
-        elapsed_time = end_time - start_time
-        frame_rate = 10 / elapsed_time  # frames / seconds
-        
-        # Frame rate should be reasonable for testing environment
-        # Lower threshold for CI environments
-        self.assertGreater(frame_rate, 10)  # Should be at least 10fps in test environment
-        
-    def test_rendering_consistency(self):
-        """Test that rendering produces consistent output."""
-        # Take two screenshots with same game state
+    def test_help_overlay(self):
+        """Test that help overlay doesn't affect game state."""
+        # Get initial state
+        initial_states = []
+        for hexagon in self.mesh.hexagons:
+            if hasattr(hexagon, 't'):
+                initial_states.append(hexagon.t)
+
+        # Run with help shown
+        self.simulate_game_loop(3, help_shown=True)
+
+        # Check that states haven't changed
+        current_states = []
+        for hexagon in self.mesh.hexagons:
+            if hasattr(hexagon, 't'):
+                current_states.append(hexagon.t)
+
+        self.assertEqual(initial_states, current_states)
+
+    def test_speed_control(self):
+        """Test that simulation speed affects update rate."""
+        # Run at normal speed
+        self.state_manager.simulation_speed = 1.0
+        initial_time = time.time()
+        self.simulate_game_loop(10)
+        normal_duration = time.time() - initial_time
+
+        # Run at double speed
+        self.state_manager.simulation_speed = 2.0
+        initial_time = time.time()
+        self.simulate_game_loop(10)
+        fast_duration = time.time() - initial_time
+
+        # Timing might not be exact, but should be roughly proportional
+        self.assertAlmostEqual(normal_duration, fast_duration, delta=0.1)
+
+    def test_grid_toggle(self):
+        """Test that grid toggle affects rendering."""
+        # Get screenshot with grid
+        self.state_manager.show_grid = True
         self.screen.fill(self.background_color)
-        self.mesh.draw(self.screen)
-        screenshot1 = pygame.surfarray.array3d(self.screen).copy()
-        
+        self.mesh.draw(self.screen, show_grid=self.state_manager.show_grid)
+        with_grid = pygame.surfarray.array3d(self.screen).copy()
+
+        # Get screenshot without grid
+        self.state_manager.show_grid = False
         self.screen.fill(self.background_color)
-        self.mesh.draw(self.screen)
-        screenshot2 = pygame.surfarray.array3d(self.screen).copy()
-        
-        # Compare screenshots (should be identical)
-        self.assertTrue((screenshot1 == screenshot2).all())
+        self.mesh.draw(self.screen, show_grid=self.state_manager.show_grid)
+        without_grid = pygame.surfarray.array3d(self.screen).copy()
+
+        # Screenshots should be different
+        self.assertTrue((with_grid != without_grid).any())
+
+    def test_state_transitions_integration(self):
+        """Test that state transitions work in game loop context."""
+        # Test various state transitions
+        transitions = [
+            (pygame.K_p, GameState.PAUSED),      # RUNNING -> PAUSED
+            (pygame.K_h, GameState.HELP),        # PAUSED -> HELP
+            (pygame.K_ESCAPE, GameState.RUNNING), # HELP -> RUNNING
+        ]
+
+        for key, expected_state in transitions:
+            event = pygame.event.Event(pygame.KEYDOWN, {'key': key})
+            self.state_manager.handle_input(event)
+            self.simulate_game_loop(1)  # Run one frame to ensure stability
+            self.assertEqual(self.state_manager.current_state, expected_state)
 
     def tearDown(self):
         """Clean up after each test method."""

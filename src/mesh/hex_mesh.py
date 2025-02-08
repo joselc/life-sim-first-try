@@ -64,11 +64,12 @@ class HexMesh:
         for hexagon in self.hexagons:
             hexagon.update(t)
 
-    def draw(self, screen: pygame.Surface) -> None:
+    def draw(self, screen: pygame.Surface, show_grid: bool = True) -> None:
         """Draw all cells in the grid.
 
         Args:
             screen (pygame.Surface): Pygame surface to draw on
+            show_grid (bool, optional): Whether to show grid lines. Defaults to True.
         """
         for hexagon in self.hexagons:
-            hexagon.draw(screen) 
+            hexagon.draw(screen, show_grid) 

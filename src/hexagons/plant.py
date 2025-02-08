@@ -39,7 +39,7 @@ class PlantHexagon(Hexagon):
         """
         self.t = t
 
-    def draw(self, screen: pygame.Surface) -> None:
+    def draw(self, screen: pygame.Surface, show_grid: bool = True) -> None:
         """Draw the plant cell on the screen.
 
         Renders the hexagon with a color that oscillates between brown and green,
@@ -48,6 +48,7 @@ class PlantHexagon(Hexagon):
 
         Args:
             screen (pygame.Surface): Pygame surface to draw on
+            show_grid (bool, optional): Whether to show grid lines. Defaults to True.
         """
         green = COLORS['GREEN']
         brown = COLORS['BROWN']
@@ -58,4 +59,5 @@ class PlantHexagon(Hexagon):
             int(brown[2] * (1 - factor) + green[2] * factor)
         )
         pygame.draw.polygon(screen, fill_color, self.points, 0)
-        pygame.draw.polygon(screen, COLORS['GRID_LINES'], self.points, 1) 
+        if show_grid:
+            pygame.draw.polygon(screen, COLORS['GRID_LINES'], self.points, 1) 

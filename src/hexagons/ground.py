@@ -18,13 +18,15 @@ class GroundHexagon(Hexagon):
         """
         pass
 
-    def draw(self, screen: pygame.Surface) -> None:
+    def draw(self, screen: pygame.Surface, show_grid: bool = True) -> None:
         """Draw the ground cell on the screen.
 
-        Renders the hexagon with a static brown color and a grid line border.
+        Renders the hexagon with a static brown color and optionally draws grid lines.
 
         Args:
             screen (pygame.Surface): Pygame surface to draw on
+            show_grid (bool, optional): Whether to show grid lines. Defaults to True.
         """
         pygame.draw.polygon(screen, COLORS['BROWN'], self.points, 0)
-        pygame.draw.polygon(screen, COLORS['GRID_LINES'], self.points, 1) 
+        if show_grid:
+            pygame.draw.polygon(screen, COLORS['GRID_LINES'], self.points, 1) 
