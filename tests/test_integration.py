@@ -7,6 +7,7 @@ from unittest.mock import patch
 from src.mesh.hex_mesh import HexMesh
 from src.game_state import GameStateManager, GameState
 from src.renderers.pygame_renderer import PygameRenderer
+from src import i18n
 from tests.test_config import (
     MOCK_SCREEN_WIDTH,
     MOCK_SCREEN_HEIGHT,
@@ -59,34 +60,48 @@ class TestGameIntegration(unittest.TestCase):
                 self.renderer.draw_overlay((0, 0, 0, 128))
                 
                 if self.state_manager.current_state == GameState.PAUSED:
-                    self.renderer.draw_text("PAUSED", 
-                                         (MOCK_SCREEN_WIDTH // 2, MOCK_SCREEN_HEIGHT // 2),
-                                         (255, 255, 255), centered=True)
-                    self.renderer.draw_text("Press H for help",
-                                         (MOCK_SCREEN_WIDTH // 2, MOCK_SCREEN_HEIGHT // 2 + 30),
-                                         (200, 200, 200), centered=True, font_size=24)
+                    self.renderer.draw_text(
+                        i18n.get_string('state.paused'),
+                        (MOCK_SCREEN_WIDTH // 2, MOCK_SCREEN_HEIGHT // 2),
+                        (255, 255, 255), centered=True
+                    )
+                    self.renderer.draw_text(
+                        i18n.get_string('state.press_h_for_help'),
+                        (MOCK_SCREEN_WIDTH // 2, MOCK_SCREEN_HEIGHT // 2 + 30),
+                        (200, 200, 200), centered=True, font_size=24
+                    )
                 
                 elif self.state_manager.current_state == GameState.HELP:
-                    self.renderer.draw_text("CONTROLS", 
-                                         (MOCK_SCREEN_WIDTH // 2, 50),
-                                         (255, 255, 255), centered=True)
+                    self.renderer.draw_text(
+                        i18n.get_string('state.controls'),
+                        (MOCK_SCREEN_WIDTH // 2, 50),
+                        (255, 255, 255), centered=True
+                    )
                     
                     y_pos = 100
                     for key, description in self.state_manager.controls:
-                        self.renderer.draw_text(key, 
-                                             (MOCK_SCREEN_WIDTH // 2 - 10, y_pos),
-                                             (255, 255, 0), centered=False, font_size=24)
-                        self.renderer.draw_text(description,
-                                             (MOCK_SCREEN_WIDTH // 2 + 10, y_pos),
-                                             (255, 255, 255), centered=False, font_size=24)
+                        self.renderer.draw_text(
+                            key,
+                            (MOCK_SCREEN_WIDTH // 2 - 10, y_pos),
+                            (255, 255, 0), centered=False, font_size=24
+                        )
+                        self.renderer.draw_text(
+                            description,
+                            (MOCK_SCREEN_WIDTH // 2 + 10, y_pos),
+                            (255, 255, 255), centered=False, font_size=24
+                        )
                         y_pos += 30
             
             # Always draw these overlays unless in help
             if self.state_manager.current_state != GameState.HELP:
-                self.renderer.draw_text(f"Speed: {self.state_manager.simulation_speed:.1f}x",
-                                     (10, 10), (255, 255, 255))
-                self.renderer.draw_text(f"Grid: {'ON' if self.state_manager.show_grid else 'OFF'}",
-                                     (10, 50), (255, 255, 255))
+                self.renderer.draw_text(
+                    i18n.get_string('state.speed', speed=f"{self.state_manager.simulation_speed:.1f}"),
+                    (10, 10), (255, 255, 255)
+                )
+                self.renderer.draw_text(
+                    i18n.get_string('state.grid', status=i18n.get_string('state.grid.on' if self.state_manager.show_grid else 'state.grid.off')),
+                    (10, 50), (255, 255, 255)
+                )
             
             self.renderer.end_frame()
 

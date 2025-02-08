@@ -5,6 +5,7 @@ import sys
 from src.mesh.hex_mesh import HexMesh
 from src.game_state import GameStateManager
 from src.renderers.pygame_renderer import PygameRenderer
+from src import i18n
 from src.config import (
     SCREEN_WIDTH,
     SCREEN_HEIGHT,
@@ -20,7 +21,7 @@ def main():
     clock = pygame.time.Clock()
     renderer = PygameRenderer()
     renderer.setup(SCREEN_WIDTH, SCREEN_HEIGHT)
-    pygame.display.set_caption('Life Simulation')
+    pygame.display.set_caption(i18n.get_string('window.title'))
 
     # Create game components
     mesh = HexMesh(GRID_COLUMNS, GRID_ROWS, SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -53,30 +54,58 @@ def main():
             renderer.draw_overlay((0, 0, 0, 128))
             
             if state_manager.current_state == state_manager.current_state.PAUSED:
-                renderer.draw_text("PAUSED", (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 
-                                (255, 255, 255), centered=True)
-                renderer.draw_text("Press H for help", 
-                                (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 30),
-                                (200, 200, 200), centered=True, font_size=24)
+                renderer.draw_text(
+                    i18n.get_string('state.paused'),
+                    (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2),
+                    (255, 255, 255), centered=True
+                )
+                renderer.draw_text(
+                    i18n.get_string('state.press_h_for_help'),
+                    (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 30),
+                    (200, 200, 200), centered=True, font_size=24
+                )
             
             elif state_manager.current_state == state_manager.current_state.HELP:
-                renderer.draw_text("CONTROLS", (SCREEN_WIDTH // 2, 50), 
-                                (255, 255, 255), centered=True)
+                renderer.draw_text(
+                    i18n.get_string('state.controls'),
+                    (SCREEN_WIDTH // 2, 50),
+                    (255, 255, 255), centered=True
+                )
                 
                 y_pos = 100
                 for key, description in state_manager.controls:
-                    renderer.draw_text(key, (SCREEN_WIDTH // 2 - 10, y_pos),
-                                    (255, 255, 0), centered=False, font_size=24)
-                    renderer.draw_text(description, (SCREEN_WIDTH // 2 + 10, y_pos),
-                                    (255, 255, 255), centered=False, font_size=24)
+                    renderer.draw_text(
+                        key,
+                        (SCREEN_WIDTH // 2 - 10, y_pos),
+                        (255, 255, 0), centered=False, font_size=24
+                    )
+                    renderer.draw_text(
+                        description,
+                        (SCREEN_WIDTH // 2 + 10, y_pos),
+                        (255, 255, 255), centered=False, font_size=24
+                    )
                     y_pos += 30
         
         # Always draw these overlays unless in help
         if state_manager.current_state != state_manager.current_state.HELP:
-            renderer.draw_text(f"Speed: {state_manager.simulation_speed:.1f}x",
-                            (10, 10), (255, 255, 255))
-            renderer.draw_text(f"Grid: {'ON' if state_manager.show_grid else 'OFF'}",
-                            (10, 50), (255, 255, 255))
+            # Draw speed
+            renderer.draw_text(
+                i18n.get_string('state.speed', speed=f"{state_manager.simulation_speed:.1f}"),
+                (10, 10), (255, 255, 255)
+            )
+            # Draw grid status
+            renderer.draw_text(
+                i18n.get_string('state.grid',
+                              status=i18n.get_string('state.grid.on' if state_manager.show_grid else 'state.grid.off')),
+                (10, 50), (255, 255, 255)
+            )
+            # Draw current language
+            current_lang = i18n.get_current_language()
+            renderer.draw_text(
+                i18n.get_string('state.language',
+                              lang=i18n.get_string(f'language.{current_lang}')),
+                (10, 90), (255, 255, 255)
+            )
         
         renderer.end_frame()
         clock.tick(FPS)

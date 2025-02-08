@@ -8,6 +8,7 @@ from src.game_state import GameStateManager, GameState
 class TestGameStateManager(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
+        pygame.init()
         self.manager = GameStateManager()
 
     def test_initial_state(self):
@@ -68,53 +69,53 @@ class TestGameStateManager(unittest.TestCase):
         self.manager.toggle_grid()
         self.assertEqual(self.manager.show_grid, initial_state)
 
-    def test_handle_input(self):
-        """Test input event handling."""
-        # Test pause key
-        event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_p})
-        self.manager.handle_input(event)
-        self.assertEqual(self.manager.current_state, GameState.PAUSED)
-        
-        # Test help key
-        event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_h})
-        self.manager.handle_input(event)
-        self.assertEqual(self.manager.current_state, GameState.HELP)
-        
-        # Test escape key in help
-        event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_ESCAPE})
-        self.manager.handle_input(event)
-        self.assertEqual(self.manager.current_state, GameState.RUNNING)
-        
-        # Test grid toggle
-        initial_grid = self.manager.show_grid
-        event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_g})
-        self.manager.handle_input(event)
-        self.assertNotEqual(self.manager.show_grid, initial_grid)
-        
-        # Test speed adjustment
-        initial_speed = self.manager.simulation_speed
-        event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_PLUS})
-        self.manager.handle_input(event)
-        self.assertGreater(self.manager.simulation_speed, initial_speed)
-        
-        # Test quit key
+    def test_quit_handling(self):
+        """Test quit functionality in different states."""
+        # Test quit in running state
         event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_q})
-        result = self.manager.handle_input(event)
-        self.assertTrue(result)  # Should return True for quit
+        self.assertTrue(self.manager.handle_input(event))
+        
+        # Test quit in help state
+        self.manager.current_state = GameState.HELP
+        self.assertTrue(self.manager.handle_input(event))
+        
+        # Test quit in paused state
+        self.manager.current_state = GameState.PAUSED
+        self.assertTrue(self.manager.handle_input(event))
 
-    def test_state_transitions(self):
-        """Test complex state transition sequences."""
-        # Test RUNNING -> PAUSED -> HELP -> RUNNING
+    def test_help_toggle_handling(self):
+        """Test help toggle in different states."""
+        event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_h})
+        
+        # Test help toggle from running
         self.assertEqual(self.manager.current_state, GameState.RUNNING)
-        
-        self.manager.toggle_pause()
-        self.assertEqual(self.manager.current_state, GameState.PAUSED)
-        
-        self.manager.toggle_help()
+        self.manager.handle_input(event)
         self.assertEqual(self.manager.current_state, GameState.HELP)
         
-        # ESC should return to RUNNING from HELP
+        # Test help toggle from help
+        self.manager.handle_input(event)
+        self.assertEqual(self.manager.current_state, GameState.RUNNING)
+        
+        # Test help toggle from paused
+        self.manager.current_state = GameState.PAUSED
+        self.manager.handle_input(event)
+        self.assertEqual(self.manager.current_state, GameState.HELP)
+
+    def test_escape_handling(self):
+        """Test escape key functionality."""
         event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_ESCAPE})
+        
+        # Test escape in help state
+        self.manager.current_state = GameState.HELP
+        self.manager.handle_input(event)
+        self.assertEqual(self.manager.current_state, GameState.RUNNING)
+        
+        # Test escape in paused state
+        self.manager.current_state = GameState.PAUSED
+        self.manager.handle_input(event)
+        self.assertEqual(self.manager.current_state, GameState.RUNNING)
+        
+        # Test escape in running state (should do nothing)
         self.manager.handle_input(event)
         self.assertEqual(self.manager.current_state, GameState.RUNNING)
 
@@ -138,6 +139,15 @@ class TestGameStateManager(unittest.TestCase):
         event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_g})
         self.manager.handle_input(event)
         self.assertEqual(self.manager.show_grid, initial_grid)
+
+    def test_non_keydown_events(self):
+        """Test that non-keydown events are ignored."""
+        event = pygame.event.Event(pygame.MOUSEBUTTONDOWN)
+        self.assertFalse(self.manager.handle_input(event))
+
+    def tearDown(self):
+        """Clean up after each test method."""
+        pygame.quit()
 
 
 if __name__ == '__main__':
