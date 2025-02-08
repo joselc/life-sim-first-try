@@ -1,5 +1,7 @@
 # Life Simulation
 
+[![Tests](https://github.com/joselc/life-sim-first-try/actions/workflows/tests.yml/badge.svg)](https://github.com/joselc/life-sim-first-try/actions/workflows/tests.yml)
+
 A Python-based life simulation using a hexagonal grid system. The simulation displays an evolving landscape of plant and ground cells, where plant cells show dynamic growth patterns over time.
 
 ## Features
