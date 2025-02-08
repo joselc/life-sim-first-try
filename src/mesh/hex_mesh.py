@@ -1,13 +1,35 @@
 import math
 import random
 import pygame
+from typing import List
 from ..hexagons.plant import PlantHexagon
 from ..hexagons.ground import GroundHexagon
 from ..config import PLANT_SPAWN_PROBABILITY
 
 
 class HexMesh:
-    def __init__(self, num_columns, num_rows, display_width, display_height):
+    """A hexagonal grid system that manages the life simulation world.
+
+    This class creates and manages a grid of hexagonal cells, handling their
+    placement, updates, and rendering. The grid is composed of both plant
+    and ground cells, randomly distributed based on spawn probability.
+
+    Attributes:
+        hexagons (List[Union[PlantHexagon, GroundHexagon]]): List of all hexagonal cells in the grid
+    """
+
+    def __init__(self, num_columns: int, num_rows: int, display_width: int, display_height: int) -> None:
+        """Initialize the hexagonal grid.
+
+        Creates a grid of hexagonal cells that fits within the specified display dimensions.
+        The grid is centered horizontally on the screen.
+
+        Args:
+            num_columns (int): Number of columns in the grid
+            num_rows (int): Number of rows in the grid
+            display_width (int): Width of the display surface in pixels
+            display_height (int): Height of the display surface in pixels
+        """
         # Calculate side length 'a' so that vertical span fits display_height exactly
         a = display_height / (num_rows * math.sqrt(3))  # side length
         # Total grid width = 2*a + (num_columns - 1)*1.5*a
@@ -33,10 +55,20 @@ class HexMesh:
                 
                 self.hexagons.append(hexagon)
 
-    def update(self, t):
+    def update(self, t: float) -> None:
+        """Update all cells in the grid.
+
+        Args:
+            t (float): Current simulation time in seconds
+        """
         for hexagon in self.hexagons:
             hexagon.update(t)
 
-    def draw(self, screen):
+    def draw(self, screen: pygame.Surface) -> None:
+        """Draw all cells in the grid.
+
+        Args:
+            screen (pygame.Surface): Pygame surface to draw on
+        """
         for hexagon in self.hexagons:
             hexagon.draw(screen) 

@@ -6,15 +6,49 @@ from ..config import COLORS
 
 
 class PlantHexagon(Hexagon):
-    def __init__(self, cx, cy, a):
+    """A hexagonal cell representing a plant in the life simulation.
+
+    This class implements a plant cell that changes color over time,
+    simulating growth and decay cycles. The color oscillates between
+    brown and green based on a sinusoidal function with a random phase.
+
+    Attributes:
+        phase (float): Random phase offset for the color oscillation
+        t (float): Current simulation time
+    """
+
+    def __init__(self, cx: float, cy: float, a: float) -> None:
+        """Initialize a plant hexagonal cell.
+
+        Args:
+            cx (float): X-coordinate of the hexagon's center
+            cy (float): Y-coordinate of the hexagon's center
+            a (float): Length of the hexagon's side
+        """
         super().__init__(cx, cy, a)
         self.phase = random.uniform(0, 2 * math.pi)
         self.t = 0
 
-    def update(self, t):
+    def update(self, t: float) -> None:
+        """Update the plant's state based on the current simulation time.
+
+        Updates the internal time tracker used for color oscillation.
+
+        Args:
+            t (float): Current simulation time in seconds
+        """
         self.t = t
 
-    def draw(self, screen):
+    def draw(self, screen: pygame.Surface) -> None:
+        """Draw the plant cell on the screen.
+
+        Renders the hexagon with a color that oscillates between brown and green,
+        creating a pulsing effect. The color transition is based on a sinusoidal
+        function with a random phase offset.
+
+        Args:
+            screen (pygame.Surface): Pygame surface to draw on
+        """
         green = COLORS['GREEN']
         brown = COLORS['BROWN']
         factor = 0.5 * (1 + math.sin(self.t + self.phase))
