@@ -1,6 +1,9 @@
 # Life Simulation
 
 [![Tests](https://github.com/joselc/life-sim-first-try/actions/workflows/tests.yml/badge.svg)](https://github.com/joselc/life-sim-first-try/actions/workflows/tests.yml)
+[![Python Versions](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10%20%7C%203.11-blue)](https://github.com/joselc/life-sim-first-try/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Dependencies](https://img.shields.io/badge/dependencies-pygame-green)](https://www.pygame.org)
 
 A Python-based life simulation using a hexagonal grid system. The simulation displays an evolving landscape of plant and ground cells, where plant cells show dynamic growth patterns over time.
 
