@@ -1,7 +1,6 @@
 import math
-import random
 import pygame
-
+from hexagon import Hexagon
 
 class HexMesh:
     def __init__(self, num_columns, num_rows, display_width, display_height):
@@ -22,35 +21,14 @@ class HexMesh:
                 else:
                     cy = offset_y + a * math.sqrt(3) + j * (a * math.sqrt(3))
                 
-                # Compute the 6 vertices of the hexagon (flat-topped)
-                points = [
-                    (cx + a, cy),
-                    (cx + a/2, cy + (a * math.sqrt(3) / 2)),
-                    (cx - a/2, cy + (a * math.sqrt(3) / 2)),
-                    (cx - a, cy),
-                    (cx - a/2, cy - (a * math.sqrt(3) / 2)),
-                    (cx + a/2, cy - (a * math.sqrt(3) / 2))
-                ]
-                # Assign a random phase for evolution
-                phase = random.uniform(0, 2 * math.pi)
-                self.hexagons.append((points, phase))
+                # Create a Hexagon instance from the imported class
+                hexagon = Hexagon(cx, cy, a)
+                self.hexagons.append(hexagon)
 
     def update(self, t):
-        self.t = t
+        for hexagon in self.hexagons:
+            hexagon.update(t)
 
     def draw(self, screen):
-        # Use current time, default 0 if not updated yet
-        current_time = getattr(self, 't', 0)
-        # Define base colors: brown and green
-        green = (34, 139, 34)
-        brown = (139, 69, 19)
-        
-        for points, phase in self.hexagons:
-            # Compute modulation factor based on time and phase
-            factor = 0.5 * (1 + math.sin(current_time + phase))
-            # Interpolate between brown and green
-            fill_color = ( int(brown[0]*(1 - factor) + green[0]*factor),
-                           int(brown[1]*(1 - factor) + green[1]*factor),
-                           int(brown[2]*(1 - factor) + green[2]*factor) )
-            pygame.draw.polygon(screen, fill_color, points, 0)  # fill hexagon
-            pygame.draw.polygon(screen, (200, 200, 200), points, 1)  # draw outline 
+        for hexagon in self.hexagons:
+            hexagon.draw(screen) 
