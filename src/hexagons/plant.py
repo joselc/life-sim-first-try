@@ -2,6 +2,7 @@ import math
 import random
 import pygame
 from .base import Hexagon
+from ..config import COLORS
 
 
 class PlantHexagon(Hexagon):
@@ -14,8 +15,8 @@ class PlantHexagon(Hexagon):
         self.t = t
 
     def draw(self, screen):
-        green = (34, 139, 34)
-        brown = (139, 69, 19)
+        green = COLORS['GREEN']
+        brown = COLORS['BROWN']
         factor = 0.5 * (1 + math.sin(self.t + self.phase))
         fill_color = (
             int(brown[0] * (1 - factor) + green[0] * factor),
@@ -23,4 +24,4 @@ class PlantHexagon(Hexagon):
             int(brown[2] * (1 - factor) + green[2] * factor)
         )
         pygame.draw.polygon(screen, fill_color, self.points, 0)
-        pygame.draw.polygon(screen, (200, 200, 200), self.points, 1) 
+        pygame.draw.polygon(screen, COLORS['GRID_LINES'], self.points, 1) 

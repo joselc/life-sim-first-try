@@ -3,6 +3,7 @@ import random
 import pygame
 from ..hexagons.plant import PlantHexagon
 from ..hexagons.ground import GroundHexagon
+from ..config import PLANT_SPAWN_PROBABILITY
 
 
 class HexMesh:
@@ -25,7 +26,7 @@ class HexMesh:
                     cy = offset_y + a * math.sqrt(3) + j * (a * math.sqrt(3))
                 
                 # Randomly choose between a plant hexagon and ground hexagon
-                if random.random() < 0.5:
+                if random.random() < PLANT_SPAWN_PROBABILITY:
                     hexagon = PlantHexagon(cx, cy, a)
                 else:
                     hexagon = GroundHexagon(cx, cy, a)

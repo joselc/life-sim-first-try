@@ -1,16 +1,24 @@
 import pygame
 import sys
 from src.mesh.hex_mesh import HexMesh
+from src.config import (
+    SCREEN_WIDTH,
+    SCREEN_HEIGHT,
+    FPS,
+    BACKGROUND_COLOR,
+    GRID_COLUMNS,
+    GRID_ROWS
+)
 
 
 def main():
     pygame.init()
     clock = pygame.time.Clock()
-    screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption('Simple Pygame Base Project')
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption('Life Simulation')
 
     # Create a HexMesh instance that computes the mesh
-    mesh = HexMesh(80, 60, 800, 600)
+    mesh = HexMesh(GRID_COLUMNS, GRID_ROWS, SCREEN_WIDTH, SCREEN_HEIGHT)
     
     running = True
     while running:
@@ -22,13 +30,13 @@ def main():
         mesh.update(pygame.time.get_ticks() / 1000.0)
         
         # Fill the screen with a color
-        screen.fill((30, 30, 30))
+        screen.fill(BACKGROUND_COLOR)
         
         # Draw the evolving hexagon mesh from HexMesh
         mesh.draw(screen)
         
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(FPS)
     
     pygame.quit()
     sys.exit()

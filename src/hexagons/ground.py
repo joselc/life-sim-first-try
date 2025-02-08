@@ -1,5 +1,6 @@
 import pygame
 from .base import Hexagon
+from ..config import COLORS
 
 
 class GroundHexagon(Hexagon):
@@ -7,6 +8,5 @@ class GroundHexagon(Hexagon):
         pass
 
     def draw(self, screen):
-        brown = (139, 69, 19)
-        pygame.draw.polygon(screen, brown, self.points, 0)
-        pygame.draw.polygon(screen, (200, 200, 200), self.points, 1) 
+        pygame.draw.polygon(screen, COLORS['BROWN'], self.points, 0)
+        pygame.draw.polygon(screen, COLORS['GRID_LINES'], self.points, 1) 
