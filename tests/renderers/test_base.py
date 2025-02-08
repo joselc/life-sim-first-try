@@ -8,9 +8,10 @@ from src.renderers.base import Renderable, BaseRenderer
 class MockRenderable:
     """Mock implementation of the Renderable protocol for testing."""
     
-    def __init__(self, points: List[Tuple[float, float]], color: Tuple[int, int, int]):
+    def __init__(self, points: List[Tuple[float, float]], color: Tuple[int, int, int], base_color: Tuple[int, int, int] = None):
         self._points = points
         self._color = color
+        self._base_color = base_color if base_color is not None else color
     
     @property
     def points(self) -> List[Tuple[float, float]]:
@@ -19,6 +20,10 @@ class MockRenderable:
     @property
     def color(self) -> Tuple[int, int, int]:
         return self._color
+
+    @property
+    def base_color(self) -> Tuple[int, int, int]:
+        return self._base_color
 
 
 class MockRenderer(BaseRenderer):

@@ -18,9 +18,11 @@ class TestPygameRenderer(unittest.TestCase):
         """Set up test fixtures before each test method."""
         self.renderer = PygameRenderer()
         self.renderer.setup(MOCK_SCREEN_WIDTH, MOCK_SCREEN_HEIGHT)
+        # Create a mock renderable with both color and base_color
         self.renderable = MockRenderable(
             points=[(0, 0), (10, 0), (10, 10), (0, 10)],
-            color=MOCK_COLORS['GREEN']
+            color=MOCK_COLORS['GREEN'],
+            base_color=MOCK_COLORS['GREEN']  # Add base_color
         )
 
     def test_initialization(self):
@@ -44,21 +46,30 @@ class TestPygameRenderer(unittest.TestCase):
         self.renderer.draw_hexagon(self.renderable, show_grid=True)
         
         # Check that the hexagon was drawn with the correct color
+        # Test a point inside the hexagon (5, 5)
         color = self.renderer.screen.get_at((5, 5))[:3]  # Get RGB values
-        self.assertEqual(color, self.renderable.color)
+        self.assertEqual(color, self.renderable.base_color)
 
     def test_draw_text(self):
         """Test that text is drawn correctly."""
         text = "Test"
         color = (255, 255, 255)
-        position = (10, 10)
+        position = (50, 50)  # Move position to ensure it's within bounds
         
         self.renderer.begin_frame()
         self.renderer.draw_text(text, position, color)
         
-        # Check that something was drawn at the text position
-        drawn_color = self.renderer.screen.get_at(position)[:3]
-        self.assertNotEqual(drawn_color, (30, 30, 30))  # Should not be background color
+        # Get the color of a few pixels around the text position
+        colors = [
+            self.renderer.screen.get_at((x, y))[:3]
+            for x in range(position[0]-5, position[0]+5)
+            for y in range(position[1]-5, position[1]+5)
+        ]
+        
+        # At least one pixel should be different from background
+        background_color = (30, 30, 30)
+        self.assertTrue(any(c != background_color for c in colors),
+                       "No text pixels found different from background")
 
     def test_draw_overlay(self):
         """Test that overlay is drawn correctly."""

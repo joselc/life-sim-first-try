@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Dependencies](https://img.shields.io/badge/dependencies-pygame-green)](https://www.pygame.org)
 [![Repo Size](https://img.shields.io/github/repo-size/joselc/life-sim-first-try)](https://github.com/joselc/life-sim-first-try)
+[![codecov](https://codecov.io/gh/joselc/life-sim-first-try/branch/main/graph/badge.svg)](https://codecov.io/gh/joselc/life-sim-first-try)
 
 A Python-based life simulation using a hexagonal grid system. The simulation displays an evolving landscape of plant and ground cells, where plant cells show dynamic growth patterns over time.
 
@@ -103,10 +104,28 @@ life-sim/
 
 ## Testing
 
-Run the test suite:
+1. Install testing dependencies:
 ```bash
-python run_tests.py
+# Option 1: Install all test dependencies through the package
+pip install -e .[test]
+
+# Option 2: Install test dependencies directly
+pip install pytest pytest-cov
 ```
+
+2. Run the tests:
+```bash
+# Run all tests
+pytest
+
+# Run tests with coverage report
+pytest --cov=src --cov-report=term-missing
+
+# Run tests and generate HTML coverage report
+pytest --cov=src --cov-report=html
+```
+
+The HTML coverage report will be generated in the `htmlcov` directory. Open `htmlcov/index.html` in your browser to view it.
 
 ## License
 
