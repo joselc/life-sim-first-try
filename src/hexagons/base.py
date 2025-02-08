@@ -1,13 +1,15 @@
+"""Base class for hexagonal cells in the life simulation."""
+
 import math
-from typing import List, Tuple
-import pygame
+from typing import List, Tuple, ClassVar
+from ..config import COLORS
 
 
 class Hexagon:
     """Base class for hexagonal cells in the life simulation.
 
     This class provides the basic structure and interface for hexagonal cells,
-    including their geometric properties and basic rendering capabilities.
+    including their geometric properties and state management.
 
     Attributes:
         cx (float): X-coordinate of the hexagon's center
@@ -15,6 +17,9 @@ class Hexagon:
         a (float): Length of the hexagon's side
         points (List[Tuple[float, float]]): List of (x, y) coordinates for the hexagon's vertices
     """
+
+    # Default color for the hexagon
+    DEFAULT_COLOR: ClassVar[Tuple[int, int, int]] = COLORS['BROWN']
 
     def __init__(self, cx: float, cy: float, a: float) -> None:
         """Initialize a hexagonal cell.
@@ -27,7 +32,7 @@ class Hexagon:
         self.cx = cx
         self.cy = cy
         self.a = a
-        self.points: List[Tuple[float, float]] = [
+        self._points: List[Tuple[float, float]] = [
             (cx + a, cy),
             (cx + a/2, cy + (a * math.sqrt(3) / 2)),
             (cx - a/2, cy + (a * math.sqrt(3) / 2)),
@@ -44,11 +49,20 @@ class Hexagon:
         """
         pass
 
-    def draw(self, screen: pygame.Surface, show_grid: bool = True) -> None:
-        """Draw the hexagonal cell on the screen.
-
-        Args:
-            screen (pygame.Surface): Pygame surface to draw on
-            show_grid (bool, optional): Whether to show grid lines. Defaults to True.
+    @property
+    def points(self) -> List[Tuple[float, float]]:
+        """Get the points that define the hexagon's shape.
+        
+        Returns:
+            List[Tuple[float, float]]: List of (x, y) coordinates
         """
-        pass 
+        return self._points
+
+    @property
+    def color(self) -> Tuple[int, int, int]:
+        """Get the current color of the hexagon.
+        
+        Returns:
+            Tuple[int, int, int]: RGB color values
+        """
+        return self.DEFAULT_COLOR 

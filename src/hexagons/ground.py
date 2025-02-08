@@ -1,4 +1,6 @@
-import pygame
+"""Ground cell implementation for the life simulation."""
+
+from typing import Tuple
 from .base import Hexagon
 from ..config import COLORS
 
@@ -18,15 +20,11 @@ class GroundHexagon(Hexagon):
         """
         pass
 
-    def draw(self, screen: pygame.Surface, show_grid: bool = True) -> None:
-        """Draw the ground cell on the screen.
-
-        Renders the hexagon with a static brown color and optionally draws grid lines.
-
-        Args:
-            screen (pygame.Surface): Pygame surface to draw on
-            show_grid (bool, optional): Whether to show grid lines. Defaults to True.
+    @property
+    def color(self) -> Tuple[int, int, int]:
+        """Get the color of the ground cell.
+        
+        Returns:
+            Tuple[int, int, int]: RGB color values (brown)
         """
-        pygame.draw.polygon(screen, COLORS['BROWN'], self.points, 0)
-        if show_grid:
-            pygame.draw.polygon(screen, COLORS['GRID_LINES'], self.points, 1) 
+        return COLORS['BROWN'] 

@@ -2,7 +2,6 @@
 
 import unittest
 import math
-import pygame
 from src.hexagons.plant import PlantHexagon
 from tests.test_config import MOCK_CELL_SIZE, MOCK_COLORS
 
@@ -10,8 +9,6 @@ from tests.test_config import MOCK_CELL_SIZE, MOCK_COLORS
 class TestPlantHexagon(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
-        pygame.init()
-        self.screen = pygame.Surface((100, 100))
         self.plant = PlantHexagon(50, 50, MOCK_CELL_SIZE)
 
     def test_initialization(self):
@@ -30,22 +27,32 @@ class TestPlantHexagon(unittest.TestCase):
 
     def test_color_oscillation(self):
         """Test that color oscillates between brown and green."""
-        # Test at t=0
+        green = MOCK_COLORS['GREEN']
+        brown = MOCK_COLORS['BROWN']
+        
+        # Test at t=0 with phase=0 (should be middle color)
         self.plant.t = 0
-        self.plant.phase = 0  # Force phase to 0 for predictable testing
-        self.plant.draw(self.screen)
+        self.plant.phase = 0
+        color = self.plant.color
+        self.assertEqual(len(color), 3)  # RGB color
+        for i in range(3):
+            expected = (brown[i] + green[i]) // 2
+            self.assertAlmostEqual(color[i], expected, delta=1)
         
-        # Test at t=pi/2 (should be more green)
+        # Test at t=pi/2 with phase=0 (should be greener)
         self.plant.t = math.pi/2
-        self.plant.draw(self.screen)
+        color = self.plant.color
+        # At least one color component should be closer to green than to brown
+        differences = [abs(color[i] - green[i]) - abs(color[i] - brown[i]) for i in range(3)]
+        self.assertTrue(any(diff < 0 for diff in differences), 
+                       "Color should be closer to green in at least one component")
         
-        # Test at t=pi (should be back to middle)
+        # Test at t=pi with phase=0 (should be back to middle)
         self.plant.t = math.pi
-        self.plant.draw(self.screen)
-
-    def tearDown(self):
-        """Clean up after each test method."""
-        pygame.quit()
+        color = self.plant.color
+        for i in range(3):
+            expected = (brown[i] + green[i]) // 2
+            self.assertAlmostEqual(color[i], expected, delta=1)
 
 
 if __name__ == '__main__':

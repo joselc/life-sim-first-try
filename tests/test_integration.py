@@ -6,6 +6,7 @@ import time
 from unittest.mock import patch
 from src.mesh.hex_mesh import HexMesh
 from src.game_state import GameStateManager, GameState
+from src.renderers.pygame_renderer import PygameRenderer
 from tests.test_config import (
     MOCK_SCREEN_WIDTH,
     MOCK_SCREEN_HEIGHT,
@@ -18,10 +19,8 @@ class TestGameIntegration(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
         pygame.init()
-        # Initialize a dummy display for testing
-        pygame.display.set_mode((MOCK_SCREEN_WIDTH, MOCK_SCREEN_HEIGHT))
-        self.screen = pygame.Surface((MOCK_SCREEN_WIDTH, MOCK_SCREEN_HEIGHT))
-        self.clock = pygame.time.Clock()
+        self.renderer = PygameRenderer()
+        self.renderer.setup(MOCK_SCREEN_WIDTH, MOCK_SCREEN_HEIGHT)
         self.mesh = HexMesh(MOCK_COLUMNS, MOCK_ROWS, MOCK_SCREEN_WIDTH, MOCK_SCREEN_HEIGHT)
         self.state_manager = GameStateManager()
         self.background_color = (30, 30, 30)
@@ -49,22 +48,53 @@ class TestGameIntegration(unittest.TestCase):
                 self.mesh.update(current_time * self.state_manager.simulation_speed)
             
             # Draw everything
-            self.screen.fill(self.background_color)
-            self.mesh.draw(self.screen, show_grid=self.state_manager.show_grid)
-            self.state_manager.draw_overlay(self.screen)
+            self.renderer.begin_frame()
             
-            # Copy to display surface
-            pygame.display.get_surface().blit(self.screen, (0, 0))
-            pygame.display.flip()
+            # Draw all hexagons
+            for hexagon in self.mesh.hexagons:
+                self.renderer.draw_hexagon(hexagon, show_grid=self.state_manager.show_grid)
+            
+            # Draw state overlays
+            if self.state_manager.current_state in [GameState.PAUSED, GameState.HELP]:
+                self.renderer.draw_overlay((0, 0, 0, 128))
+                
+                if self.state_manager.current_state == GameState.PAUSED:
+                    self.renderer.draw_text("PAUSED", 
+                                         (MOCK_SCREEN_WIDTH // 2, MOCK_SCREEN_HEIGHT // 2),
+                                         (255, 255, 255), centered=True)
+                    self.renderer.draw_text("Press H for help",
+                                         (MOCK_SCREEN_WIDTH // 2, MOCK_SCREEN_HEIGHT // 2 + 30),
+                                         (200, 200, 200), centered=True, font_size=24)
+                
+                elif self.state_manager.current_state == GameState.HELP:
+                    self.renderer.draw_text("CONTROLS", 
+                                         (MOCK_SCREEN_WIDTH // 2, 50),
+                                         (255, 255, 255), centered=True)
+                    
+                    y_pos = 100
+                    for key, description in self.state_manager.controls:
+                        self.renderer.draw_text(key, 
+                                             (MOCK_SCREEN_WIDTH // 2 - 10, y_pos),
+                                             (255, 255, 0), centered=False, font_size=24)
+                        self.renderer.draw_text(description,
+                                             (MOCK_SCREEN_WIDTH // 2 + 10, y_pos),
+                                             (255, 255, 255), centered=False, font_size=24)
+                        y_pos += 30
+            
+            # Always draw these overlays unless in help
+            if self.state_manager.current_state != GameState.HELP:
+                self.renderer.draw_text(f"Speed: {self.state_manager.simulation_speed:.1f}x",
+                                     (10, 10), (255, 255, 255))
+                self.renderer.draw_text(f"Grid: {'ON' if self.state_manager.show_grid else 'OFF'}",
+                                     (10, 50), (255, 255, 255))
+            
+            self.renderer.end_frame()
 
     def test_game_initialization(self):
         """Test that game components are properly initialized."""
-        self.assertIsNotNone(self.screen)
-        self.assertIsNotNone(self.clock)
+        self.assertIsNotNone(self.renderer)
         self.assertIsNotNone(self.mesh)
         self.assertIsNotNone(self.state_manager)
-        self.assertEqual(self.screen.get_width(), MOCK_SCREEN_WIDTH)
-        self.assertEqual(self.screen.get_height(), MOCK_SCREEN_HEIGHT)
 
     def test_pause_functionality(self):
         """Test that game properly handles pause state."""
@@ -125,15 +155,17 @@ class TestGameIntegration(unittest.TestCase):
         """Test that grid toggle affects rendering."""
         # Get screenshot with grid
         self.state_manager.show_grid = True
-        self.screen.fill(self.background_color)
-        self.mesh.draw(self.screen, show_grid=self.state_manager.show_grid)
-        with_grid = pygame.surfarray.array3d(self.screen).copy()
+        self.renderer.begin_frame()
+        for hexagon in self.mesh.hexagons:
+            self.renderer.draw_hexagon(hexagon, show_grid=True)
+        with_grid = pygame.surfarray.array3d(self.renderer.screen).copy()
 
         # Get screenshot without grid
         self.state_manager.show_grid = False
-        self.screen.fill(self.background_color)
-        self.mesh.draw(self.screen, show_grid=self.state_manager.show_grid)
-        without_grid = pygame.surfarray.array3d(self.screen).copy()
+        self.renderer.begin_frame()
+        for hexagon in self.mesh.hexagons:
+            self.renderer.draw_hexagon(hexagon, show_grid=False)
+        without_grid = pygame.surfarray.array3d(self.renderer.screen).copy()
 
         # Screenshots should be different
         self.assertTrue((with_grid != without_grid).any())
@@ -155,7 +187,7 @@ class TestGameIntegration(unittest.TestCase):
 
     def tearDown(self):
         """Clean up after each test method."""
-        pygame.quit()
+        self.renderer.cleanup()
 
 
 if __name__ == '__main__':

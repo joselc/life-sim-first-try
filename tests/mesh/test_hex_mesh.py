@@ -1,10 +1,10 @@
 """Unit tests for the HexMesh class."""
 
 import unittest
-import pygame
 from src.mesh.hex_mesh import HexMesh
 from src.hexagons.plant import PlantHexagon
 from src.hexagons.ground import GroundHexagon
+from tests.renderers.test_base import MockRenderer
 from tests.test_config import (
     MOCK_SCREEN_WIDTH,
     MOCK_SCREEN_HEIGHT,
@@ -16,9 +16,8 @@ from tests.test_config import (
 class TestHexMesh(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
-        pygame.init()
-        self.screen = pygame.Surface((MOCK_SCREEN_WIDTH, MOCK_SCREEN_HEIGHT))
         self.mesh = HexMesh(MOCK_COLUMNS, MOCK_ROWS, MOCK_SCREEN_WIDTH, MOCK_SCREEN_HEIGHT)
+        self.renderer = MockRenderer()
 
     def test_initialization(self):
         """Test that mesh is initialized with correct number of hexagons."""
@@ -66,18 +65,19 @@ class TestHexMesh(unittest.TestCase):
             if isinstance(hexagon, PlantHexagon):
                 self.assertEqual(hexagon.t, test_time)
 
-    def test_draw(self):
-        """Test that draw method executes without errors."""
-        try:
-            self.mesh.draw(self.screen)
-            success = True
-        except Exception:
-            success = False
-        self.assertTrue(success)
-
-    def tearDown(self):
-        """Clean up after each test method."""
-        pygame.quit()
+    def test_rendering(self):
+        """Test that all hexagons can be rendered."""
+        # Render all hexagons
+        for hexagon in self.mesh.hexagons:
+            self.renderer.draw_hexagon(hexagon, show_grid=True)
+        
+        # Check that all hexagons were rendered
+        self.assertEqual(len(self.renderer.drawn_hexagons), len(self.mesh.hexagons))
+        
+        # Check that each hexagon was rendered with grid
+        for drawn_hexagon, show_grid in self.renderer.drawn_hexagons:
+            self.assertTrue(show_grid)
+            self.assertTrue(isinstance(drawn_hexagon, (PlantHexagon, GroundHexagon)))
 
 
 if __name__ == '__main__':

@@ -1,6 +1,8 @@
+"""Plant cell implementation for the life simulation."""
+
 import math
 import random
-import pygame
+from typing import Tuple
 from .base import Hexagon
 from ..config import COLORS
 
@@ -39,25 +41,21 @@ class PlantHexagon(Hexagon):
         """
         self.t = t
 
-    def draw(self, screen: pygame.Surface, show_grid: bool = True) -> None:
-        """Draw the plant cell on the screen.
-
-        Renders the hexagon with a color that oscillates between brown and green,
-        creating a pulsing effect. The color transition is based on a sinusoidal
-        function with a random phase offset.
-
-        Args:
-            screen (pygame.Surface): Pygame surface to draw on
-            show_grid (bool, optional): Whether to show grid lines. Defaults to True.
+    @property
+    def color(self) -> Tuple[int, int, int]:
+        """Get the current color of the plant.
+        
+        The color oscillates between brown and green based on the current time
+        and phase offset.
+        
+        Returns:
+            Tuple[int, int, int]: RGB color values
         """
         green = COLORS['GREEN']
         brown = COLORS['BROWN']
         factor = 0.5 * (1 + math.sin(self.t + self.phase))
-        fill_color = (
+        return (
             int(brown[0] * (1 - factor) + green[0] * factor),
             int(brown[1] * (1 - factor) + green[1] * factor),
             int(brown[2] * (1 - factor) + green[2] * factor)
-        )
-        pygame.draw.polygon(screen, fill_color, self.points, 0)
-        if show_grid:
-            pygame.draw.polygon(screen, COLORS['GRID_LINES'], self.points, 1) 
+        ) 

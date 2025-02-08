@@ -1,7 +1,8 @@
+"""Hexagonal grid system for the life simulation."""
+
 import math
 import random
-import pygame
-from typing import List
+from typing import List, Union
 from ..hexagons.plant import PlantHexagon
 from ..hexagons.ground import GroundHexagon
 from ..config import PLANT_SPAWN_PROBABILITY
@@ -11,7 +12,7 @@ class HexMesh:
     """A hexagonal grid system that manages the life simulation world.
 
     This class creates and manages a grid of hexagonal cells, handling their
-    placement, updates, and rendering. The grid is composed of both plant
+    placement and updates. The grid is composed of both plant
     and ground cells, randomly distributed based on spawn probability.
 
     Attributes:
@@ -37,7 +38,7 @@ class HexMesh:
         offset_x = (display_width - grid_width) / 2
         offset_y = 0  # even columns will touch top
         
-        self.hexagons = []
+        self.hexagons: List[Union[PlantHexagon, GroundHexagon]] = []
         for i in range(num_columns):
             for j in range(num_rows):
                 # Compute center of hexagon for column i, row j
@@ -62,14 +63,4 @@ class HexMesh:
             t (float): Current simulation time in seconds
         """
         for hexagon in self.hexagons:
-            hexagon.update(t)
-
-    def draw(self, screen: pygame.Surface, show_grid: bool = True) -> None:
-        """Draw all cells in the grid.
-
-        Args:
-            screen (pygame.Surface): Pygame surface to draw on
-            show_grid (bool, optional): Whether to show grid lines. Defaults to True.
-        """
-        for hexagon in self.hexagons:
-            hexagon.draw(screen, show_grid) 
+            hexagon.update(t) 

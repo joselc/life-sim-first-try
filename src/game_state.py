@@ -22,7 +22,6 @@ class GameStateManager:
         current_state (GameState): Current state of the game
         simulation_speed (float): Speed multiplier for the simulation
         show_grid (bool): Whether to show grid lines
-        font (pygame.font.Font): Font for rendering text overlays
         controls (List[Tuple[str, str]]): List of control descriptions
     """
     
@@ -31,10 +30,6 @@ class GameStateManager:
         self.current_state = GameState.RUNNING
         self.simulation_speed = 1.0
         self.show_grid = True
-        # Initialize font for overlays
-        pygame.font.init()
-        self.font = pygame.font.Font(None, 36)
-        self.small_font = pygame.font.Font(None, 24)
         
         # Define controls list
         self.controls = [
@@ -98,58 +93,4 @@ class GameStateManager:
                     self.adjust_speed(0.1)  # Speed up
                 elif event.key == pygame.K_MINUS or event.key == pygame.K_KP_MINUS:
                     self.adjust_speed(-0.1)  # Slow down
-        return False
-                
-    def draw_overlay(self, screen: pygame.Surface):
-        """Draw state-specific overlays on the screen.
-        
-        Args:
-            screen (pygame.Surface): Surface to draw on
-        """
-        if self.current_state in [GameState.PAUSED, GameState.HELP]:
-            # Draw semi-transparent overlay
-            overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
-            pygame.draw.rect(overlay, (0, 0, 0, 128), overlay.get_rect())
-            screen.blit(overlay, (0, 0))
-            
-            if self.current_state == GameState.PAUSED:
-                # Draw "PAUSED" text
-                text = self.font.render("PAUSED", True, (255, 255, 255))
-                text_rect = text.get_rect(center=screen.get_rect().center)
-                screen.blit(text, text_rect)
-                
-                # Draw "Press H for help" below pause text
-                help_text = self.small_font.render("Press H for help", True, (200, 200, 200))
-                help_rect = help_text.get_rect(midtop=(text_rect.centerx, text_rect.bottom + 10))
-                screen.blit(help_text, help_rect)
-            
-            elif self.current_state == GameState.HELP:
-                # Draw "CONTROLS" header
-                header = self.font.render("CONTROLS", True, (255, 255, 255))
-                header_rect = header.get_rect(midtop=(screen.get_rect().centerx, 50))
-                screen.blit(header, header_rect)
-                
-                # Draw controls list
-                y_pos = header_rect.bottom + 30
-                for key, description in self.controls:
-                    # Draw key
-                    key_text = self.small_font.render(key, True, (255, 255, 0))
-                    key_rect = key_text.get_rect(topright=(screen.get_rect().centerx - 10, y_pos))
-                    screen.blit(key_text, key_rect)
-                    
-                    # Draw description
-                    desc_text = self.small_font.render(description, True, (255, 255, 255))
-                    desc_rect = desc_text.get_rect(topleft=(screen.get_rect().centerx + 10, y_pos))
-                    screen.blit(desc_text, desc_rect)
-                    
-                    y_pos += 30
-            
-        # Always draw these overlays
-        if self.current_state != GameState.HELP:  # Don't show during help screen
-            # Draw speed indicator
-            speed_text = self.font.render(f"Speed: {self.simulation_speed:.1f}x", True, (255, 255, 255))
-            screen.blit(speed_text, (10, 10))
-            
-            # Draw grid status
-            grid_text = self.font.render(f"Grid: {'ON' if self.show_grid else 'OFF'}", True, (255, 255, 255))
-            screen.blit(grid_text, (10, 50)) 
+        return False 
