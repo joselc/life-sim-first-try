@@ -3,7 +3,7 @@
 from typing import Tuple
 from .base import Hexagon
 from ..config import COLORS
-from .plant_states import PlantStateManager
+from .plant_states import PlantStateManager, PlantState
 
 
 class PlantHexagon(Hexagon):
@@ -41,18 +41,16 @@ class PlantHexagon(Hexagon):
     def color(self) -> Tuple[int, int, int]:
         """Get the current color of the plant based on its state.
         
-        The color transitions between brown and green based on the plant's
-        current state and health/growth factors.
+        Returns a distinct color for each state of the plant's lifecycle.
         
         Returns:
             Tuple[int, int, int]: RGB color values
         """
-        green = COLORS['GREEN']
-        brown = COLORS['BROWN']
-        factor = self.state_manager.color_factor
-        
-        return (
-            int(brown[0] * (1 - factor) + green[0] * factor),
-            int(brown[1] * (1 - factor) + green[1] * factor),
-            int(brown[2] * (1 - factor) + green[2] * factor)
-        ) 
+        state_colors = {
+            PlantState.SEED: COLORS['SEED'],
+            PlantState.GROWING: COLORS['GROWING'],
+            PlantState.MATURE: COLORS['MATURE'],
+            PlantState.DYING: COLORS['DYING'],
+            PlantState.DEAD: COLORS['DEAD']
+        }
+        return state_colors[self.state_manager.state] 

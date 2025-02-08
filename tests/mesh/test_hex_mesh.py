@@ -1,6 +1,7 @@
 """Unit tests for the HexMesh class."""
 
 import unittest
+import random
 from src.mesh.hex_mesh import HexMesh
 from src.hexagons.plant import PlantHexagon
 from src.hexagons.ground import GroundHexagon
@@ -17,8 +18,15 @@ from tests.test_config import (
 class TestHexMesh(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
+        # Set fixed seed for consistent plant generation
+        random.seed(12345)
         self.mesh = HexMesh(MOCK_COLUMNS, MOCK_ROWS, MOCK_SCREEN_WIDTH, MOCK_SCREEN_HEIGHT)
         self.renderer = MockRenderer()
+
+    def tearDown(self):
+        """Clean up after each test."""
+        # Reset the random seed
+        random.seed()
 
     def test_initialization(self):
         """Test that mesh is initialized with correct number of hexagons."""
