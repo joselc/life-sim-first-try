@@ -1,5 +1,6 @@
 """Initialization module for the i18n system."""
 
+from typing import List
 from .string_provider import StringProvider
 from .language_manager import LanguageManager, Language
 
@@ -30,11 +31,11 @@ def get_current_language() -> str:
     return _manager.current_language
 
 
-def get_available_languages() -> list[str]:
+def get_available_languages() -> List[str]:
     """Get list of available language codes.
     
     Returns:
-        list[str]: List of available language codes
+        List[str]: List of available language codes
     """
     return _manager.available_languages
 
