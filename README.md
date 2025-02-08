@@ -9,10 +9,18 @@ A Python-based life simulation using a hexagonal grid system. The simulation dis
 
 ## Features
 
-- Hexagonal grid-based world
-- Dynamic plant cells that evolve over time
-- Configurable grid size and display settings
+- Hexagonal grid-based world with configurable dimensions
+- Dynamic plant lifecycle simulation:
+  - Seed stage (yellow dot)
+  - Growing stage (expanding green dot)
+  - Mature stage (full green)
+  - Dying stage (transitioning to brown)
+  - Dead stage (brown)
+- Internationalization support (English and Spanish)
+- Configurable simulation speed and grid visibility
 - Smooth animations using Pygame
+- Pause/Resume functionality
+- Help overlay with controls
 
 ## Requirements
 
@@ -29,7 +37,7 @@ cd life-sim
 
 2. Install dependencies:
 ```bash
-pip install pygame
+pip install -e .
 ```
 
 ## Usage
@@ -39,14 +47,25 @@ Run the simulation:
 python main.py
 ```
 
+### Controls
+
+- `P`: Pause/Resume simulation
+- `H`: Show/Hide help
+- `G`: Toggle grid visibility
+- `+/-`: Adjust simulation speed
+- `L`: Change language
+- `ESC`: Return to simulation
+- `Q`: Quit
+
 ## Configuration
 
 The simulation can be customized by modifying the settings in `src/config.py`:
 
 - Display settings (screen size, FPS)
-- Grid dimensions
+- Grid dimensions (default: 16x12)
 - Plant spawn probability
-- Color schemes
+- Color schemes for different plant states
+- Plant lifecycle timings
 
 ## Project Structure
 
@@ -54,22 +73,39 @@ The simulation can be customized by modifying the settings in `src/config.py`:
 life-sim/
 ├── src/
 │   ├── hexagons/
-│   │   ├── base.py      # Base hexagon class
-│   │   ├── plant.py     # Plant cell implementation
-│   │   └── ground.py    # Ground cell implementation
+│   │   ├── base.py         # Base hexagon class
+│   │   ├── plant.py        # Plant cell implementation
+│   │   ├── ground.py       # Ground cell implementation
+│   │   └── plant_states.py # Plant lifecycle management
 │   ├── mesh/
-│   │   └── hex_mesh.py  # Hexagonal grid implementation
-│   └── config.py        # Configuration settings
-└── main.py              # Main application entry point
+│   │   └── hex_mesh.py     # Hexagonal grid implementation
+│   ├── renderers/
+│   │   ├── base.py         # Base renderer interface
+│   │   └── pygame_renderer.py # Pygame implementation
+│   ├── i18n/
+│   │   ├── strings_en.py   # English strings
+│   │   └── strings_es.py   # Spanish strings
+│   ├── game_state.py       # Game state management
+│   └── config.py           # Configuration settings
+├── tests/                  # Test suite
+├── main.py                 # Main application entry point
+└── run_tests.py           # Test runner
 ```
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Commit your changes
+3. Commit your changes (following [Conventional Commits](https://www.conventionalcommits.org/))
 4. Push to the branch
 5. Create a Pull Request
+
+## Testing
+
+Run the test suite:
+```bash
+python run_tests.py
+```
 
 ## License
 
