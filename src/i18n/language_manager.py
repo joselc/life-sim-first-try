@@ -1,6 +1,6 @@
 """Language management for the i18n system."""
 
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from .string_provider import StringProvider, DefaultStringProvider
 from . import strings_en, strings_es
 
@@ -33,11 +33,11 @@ class LanguageManager:
         return self._current_language
 
     @property
-    def available_languages(self) -> list[str]:
+    def available_languages(self) -> List[str]:
         """Get list of available language codes.
         
         Returns:
-            list[str]: List of available language codes
+            List[str]: List of available language codes
         """
         return list(self._providers.keys())
 
