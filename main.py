@@ -1,6 +1,6 @@
 import pygame
 import sys
-from mesh import HexMesh
+from src.mesh.hex_mesh import HexMesh
 
 
 def main():

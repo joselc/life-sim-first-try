@@ -1,7 +1,9 @@
 import math
 import random
 import pygame
-from hexagon import PlantHexagon, GroundHexagon
+from ..hexagons.plant import PlantHexagon
+from ..hexagons.ground import GroundHexagon
+
 
 class HexMesh:
     def __init__(self, num_columns, num_rows, display_width, display_height):

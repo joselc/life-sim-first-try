@@ -1,26 +1,7 @@
 import math
 import random
 import pygame
-
-class Hexagon:
-    def __init__(self, cx, cy, a):
-        self.cx = cx
-        self.cy = cy
-        self.a = a
-        self.points = [
-            (cx + a, cy),
-            (cx + a/2, cy + (a * math.sqrt(3) / 2)),
-            (cx - a/2, cy + (a * math.sqrt(3) / 2)),
-            (cx - a, cy),
-            (cx - a/2, cy - (a * math.sqrt(3) / 2)),
-            (cx + a/2, cy - (a * math.sqrt(3) / 2))
-        ]
-    
-    def update(self, t):
-        pass
-
-    def draw(self, screen):
-        pass
+from .base import Hexagon
 
 
 class PlantHexagon(Hexagon):
@@ -42,14 +23,4 @@ class PlantHexagon(Hexagon):
             int(brown[2] * (1 - factor) + green[2] * factor)
         )
         pygame.draw.polygon(screen, fill_color, self.points, 0)
-        pygame.draw.polygon(screen, (200, 200, 200), self.points, 1)
-
-
-class GroundHexagon(Hexagon):
-    def update(self, t):
-        pass
-
-    def draw(self, screen):
-        brown = (139, 69, 19)
-        pygame.draw.polygon(screen, brown, self.points, 0)
         pygame.draw.polygon(screen, (200, 200, 200), self.points, 1) 
