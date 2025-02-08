@@ -4,6 +4,7 @@ import unittest
 from src.mesh.hex_mesh import HexMesh
 from src.hexagons.plant import PlantHexagon
 from src.hexagons.ground import GroundHexagon
+from src.hexagons.plant_states import PlantState
 from tests.renderers.test_base import MockRenderer
 from tests.test_config import (
     MOCK_SCREEN_WIDTH,
@@ -57,13 +58,24 @@ class TestHexMesh(unittest.TestCase):
 
     def test_update_propagation(self):
         """Test that update calls are propagated to all hexagons."""
-        test_time = 1.5
-        self.mesh.update(test_time)
+        # First update - transition from SEED to GROWING
+        self.mesh.update(0.1)
+        
+        # Second update - allow for growth
+        self.mesh.update(0.5)
         
         # Check that all plant hexagons have been updated
+        plant_count = 0
         for hexagon in self.mesh.hexagons:
             if isinstance(hexagon, PlantHexagon):
-                self.assertEqual(hexagon.t, test_time)
+                plant_count += 1
+                # Plants should have moved past SEED state and started growing
+                self.assertEqual(hexagon.state_manager.state, PlantState.GROWING)
+                self.assertGreater(hexagon.state_manager.growth, 0.0)
+                self.assertLess(hexagon.state_manager.growth, 1.0)
+        
+        # Ensure we actually tested some plants
+        self.assertGreater(plant_count, 0)
 
     def test_rendering(self):
         """Test that all hexagons can be rendered."""

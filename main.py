@@ -28,6 +28,8 @@ def main():
     state_manager = GameStateManager()
     
     running = True
+    last_time = pygame.time.get_ticks() / 1000.0
+    
     while running:
         # Handle events
         for event in pygame.event.get():
@@ -37,10 +39,14 @@ def main():
             elif state_manager.handle_input(event):
                 running = False  # Quit if state manager returns True
         
-        # Update game state if not paused
+        # Calculate time delta
         current_time = pygame.time.get_ticks() / 1000.0
+        dt = current_time - last_time
+        last_time = current_time
+        
+        # Update game state if not paused
         if state_manager.current_state == state_manager.current_state.RUNNING:
-            mesh.update(current_time * state_manager.simulation_speed)
+            mesh.update(dt * state_manager.simulation_speed)
         
         # Draw everything
         renderer.begin_frame()

@@ -1,22 +1,19 @@
 """Plant cell implementation for the life simulation."""
 
-import math
-import random
 from typing import Tuple
 from .base import Hexagon
 from ..config import COLORS
+from .plant_states import PlantStateManager
 
 
 class PlantHexagon(Hexagon):
     """A hexagonal cell representing a plant in the life simulation.
 
-    This class implements a plant cell that changes color over time,
-    simulating growth and decay cycles. The color oscillates between
-    brown and green based on a sinusoidal function with a random phase.
+    This class implements a plant cell that changes over time based on its state,
+    simulating growth, maturity, flowering, and decay cycles.
 
     Attributes:
-        phase (float): Random phase offset for the color oscillation
-        t (float): Current simulation time
+        state_manager (PlantStateManager): Manages the plant's lifecycle states
     """
 
     def __init__(self, cx: float, cy: float, a: float) -> None:
@@ -28,32 +25,32 @@ class PlantHexagon(Hexagon):
             a (float): Length of the hexagon's side
         """
         super().__init__(cx, cy, a)
-        self.phase = random.uniform(0, 2 * math.pi)
-        self.t = 0
+        self.state_manager = PlantStateManager()
 
     def update(self, t: float) -> None:
         """Update the plant's state based on the current simulation time.
 
-        Updates the internal time tracker used for color oscillation.
+        Updates the plant's state manager to handle lifecycle transitions.
 
         Args:
             t (float): Current simulation time in seconds
         """
-        self.t = t
+        self.state_manager.update(t)
 
     @property
     def color(self) -> Tuple[int, int, int]:
-        """Get the current color of the plant.
+        """Get the current color of the plant based on its state.
         
-        The color oscillates between brown and green based on the current time
-        and phase offset.
+        The color transitions between brown and green based on the plant's
+        current state and health/growth factors.
         
         Returns:
             Tuple[int, int, int]: RGB color values
         """
         green = COLORS['GREEN']
         brown = COLORS['BROWN']
-        factor = 0.5 * (1 + math.sin(self.t + self.phase))
+        factor = self.state_manager.color_factor
+        
         return (
             int(brown[0] * (1 - factor) + green[0] * factor),
             int(brown[1] * (1 - factor) + green[1] * factor),

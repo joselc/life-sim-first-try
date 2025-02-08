@@ -20,6 +20,7 @@ class MockGameStringProvider(StringProvider):
             'controls.speed': 'MOCK_SPEED',
             'controls.escape': 'MOCK_ESCAPE',
             'controls.quit': 'MOCK_QUIT',
+            'controls.language': 'MOCK_LANGUAGE',
             'state.paused': 'MOCK_PAUSED_STATE',
             'state.press_h_for_help': 'MOCK_PRESS_H',
             'state.controls': 'MOCK_CONTROLS_TITLE',
@@ -53,7 +54,8 @@ class TestI18NGameStateIntegration(unittest.TestCase):
             ('G', 'MOCK_GRID'),
             ('+/-', 'MOCK_SPEED'),
             ('ESC', 'MOCK_ESCAPE'),
-            ('Q', 'MOCK_QUIT'),
+            ('L', 'MOCK_LANGUAGE'),
+            ('Q', 'MOCK_QUIT')
         ]
         
         self.assertEqual(len(self.manager.controls), len(expected_controls))
