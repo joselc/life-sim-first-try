@@ -31,11 +31,26 @@ class HexMesh:
                     (cx - a/2, cy - (a * math.sqrt(3) / 2)),
                     (cx + a/2, cy - (a * math.sqrt(3) / 2))
                 ]
-                # Select fill color randomly: green or brown
-                fill_color = random.choice([(34, 139, 34), (139, 69, 19)])
-                self.hexagons.append((points, fill_color))
+                # Assign a random phase for evolution
+                phase = random.uniform(0, 2 * math.pi)
+                self.hexagons.append((points, phase))
+
+    def update(self, t):
+        self.t = t
 
     def draw(self, screen):
-        for points, fill_color in self.hexagons:
+        # Use current time, default 0 if not updated yet
+        current_time = getattr(self, 't', 0)
+        # Define base colors: brown and green
+        green = (34, 139, 34)
+        brown = (139, 69, 19)
+        
+        for points, phase in self.hexagons:
+            # Compute modulation factor based on time and phase
+            factor = 0.5 * (1 + math.sin(current_time + phase))
+            # Interpolate between brown and green
+            fill_color = ( int(brown[0]*(1 - factor) + green[0]*factor),
+                           int(brown[1]*(1 - factor) + green[1]*factor),
+                           int(brown[2]*(1 - factor) + green[2]*factor) )
             pygame.draw.polygon(screen, fill_color, points, 0)  # fill hexagon
             pygame.draw.polygon(screen, (200, 200, 200), points, 1)  # draw outline 

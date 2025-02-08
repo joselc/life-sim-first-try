@@ -18,10 +18,13 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
         
+        # Update mesh evolution with current time (in seconds)
+        mesh.update(pygame.time.get_ticks() / 1000.0)
+        
         # Fill the screen with a color
         screen.fill((30, 30, 30))
         
-        # Draw the hexagon mesh from HexMesh
+        # Draw the evolving hexagon mesh from HexMesh
         mesh.draw(screen)
         
         pygame.display.flip()
