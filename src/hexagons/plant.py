@@ -16,6 +16,10 @@ class PlantHexagon(Hexagon):
         state_manager (PlantStateManager): Manages the plant's lifecycle states
     """
 
+    # Visual detail constants
+    SEED_DOT_RADIUS = 0.15    # Relative to hexagon size
+    GROWING_DOT_RADIUS = 0.45  # Relative to hexagon size (increased from 0.3)
+
     def __init__(self, cx: float, cy: float, a: float) -> None:
         """Initialize a plant hexagonal cell.
 
@@ -38,19 +42,31 @@ class PlantHexagon(Hexagon):
         self.state_manager.update(t)
 
     @property
-    def color(self) -> Tuple[int, int, int]:
-        """Get the current color of the plant based on its state.
-        
-        Returns a distinct color for each state of the plant's lifecycle.
-        
-        Returns:
-            Tuple[int, int, int]: RGB color values
-        """
-        state_colors = {
-            PlantState.SEED: COLORS['SEED'],
-            PlantState.GROWING: COLORS['GROWING'],
-            PlantState.MATURE: COLORS['MATURE'],
-            PlantState.DYING: COLORS['DYING'],
-            PlantState.DEAD: COLORS['DEAD']
-        }
-        return state_colors[self.state_manager.state] 
+    def base_color(self) -> Tuple[int, int, int]:
+        """Get the base color of the hexagon."""
+        if self.state_manager.state == PlantState.MATURE:
+            return COLORS['MATURE']
+        elif self.state_manager.state == PlantState.DYING:
+            return COLORS['DYING']
+        elif self.state_manager.state == PlantState.DEAD:
+            return COLORS['DEAD']
+        else:
+            return COLORS['BROWN']  # Ground color for SEED and GROWING states
+
+    @property
+    def detail_color(self) -> Tuple[int, int, int]:
+        """Get the color of the detail (dot) in the center."""
+        if self.state_manager.state == PlantState.SEED:
+            return COLORS['YELLOW']  # New color for seed dot
+        elif self.state_manager.state == PlantState.GROWING:
+            return COLORS['GROWING']
+        return (0, 0, 0)  # Black for other states (won't be visible)
+
+    @property
+    def detail_radius(self) -> float:
+        """Get the radius of the detail (dot) relative to hexagon size."""
+        if self.state_manager.state == PlantState.SEED:
+            return self.SEED_DOT_RADIUS
+        elif self.state_manager.state == PlantState.GROWING:
+            return self.GROWING_DOT_RADIUS
+        return 0.0  # No dot for other states 

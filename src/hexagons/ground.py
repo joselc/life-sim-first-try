@@ -21,10 +21,28 @@ class GroundHexagon(Hexagon):
         pass
 
     @property
-    def color(self) -> Tuple[int, int, int]:
-        """Get the color of the ground cell.
+    def base_color(self) -> Tuple[int, int, int]:
+        """Get the base color of the ground cell.
         
         Returns:
             Tuple[int, int, int]: RGB color values (brown)
         """
-        return COLORS['BROWN'] 
+        return COLORS['BROWN']
+
+    @property
+    def detail_color(self) -> Tuple[int, int, int]:
+        """Get the detail color (not used for ground).
+        
+        Returns:
+            Tuple[int, int, int]: RGB color values (black)
+        """
+        return (0, 0, 0)
+
+    @property
+    def detail_radius(self) -> float:
+        """Get the detail radius (not used for ground).
+        
+        Returns:
+            float: Always 0.0 as ground has no details
+        """
+        return 0.0 

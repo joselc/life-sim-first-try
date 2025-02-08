@@ -26,17 +26,21 @@ class TestPlantHexagon(unittest.TestCase):
         # Start as seed
         self.assertEqual(self.plant.state_manager.state, PlantState.SEED)
         
-        # Update should transition to growing immediately
+        # Update should stay in seed state initially
         self.plant.update(0.1)
+        self.assertEqual(self.plant.state_manager.state, PlantState.SEED)
+        
+        # After SEED_DURATION, should transition to growing
+        self.plant.update(self.plant.state_manager.SEED_DURATION)
         self.assertEqual(self.plant.state_manager.state, PlantState.GROWING)
         
         # Should be growing for a while
-        self.plant.update(0.5)
+        self.plant.update(self.plant.state_manager.GROWTH_THRESHOLD / 2)
         self.assertEqual(self.plant.state_manager.state, PlantState.GROWING)
         self.assertGreater(self.plant.state_manager.growth, 0.0)
         
         # After growth threshold, should be mature
-        self.plant.update(0.5)  # Complete growth
+        self.plant.update(self.plant.state_manager.GROWTH_THRESHOLD)  # Complete growth
         self.assertEqual(self.plant.state_manager.state, PlantState.MATURE)
         
         # Should stay mature for a while
@@ -53,30 +57,29 @@ class TestPlantHexagon(unittest.TestCase):
 
     def test_color_transitions(self):
         """Test that color changes appropriately with state transitions."""
-        green = MOCK_COLORS['GREEN']
-        brown = MOCK_COLORS['BROWN']
-        
-        # Start as seed (should be brown)
+        # Start as seed (should be brown with yellow dot)
         self.assertEqual(self.plant.state_manager.state, PlantState.SEED)
-        self.assertEqual(self.plant.state_manager.color_factor, 0.0)
+        self.assertEqual(self.plant.base_color, MOCK_COLORS['BROWN'])
         
-        # Growing should transition towards green
-        self.plant.update(0.1)  # Start growing
-        self.plant.update(0.5)  # Progress growth
+        # Growing should be brown with green dot
+        self.plant.update(self.plant.state_manager.SEED_DURATION + 0.1)
         self.assertEqual(self.plant.state_manager.state, PlantState.GROWING)
+        self.assertEqual(self.plant.base_color, MOCK_COLORS['BROWN'])
+        
+        # Progress growth
+        self.plant.update(self.plant.state_manager.GROWTH_THRESHOLD / 2)
         self.assertGreater(self.plant.state_manager.growth, 0.0)
         self.assertLess(self.plant.state_manager.growth, 1.0)
         
-        # Mature should be most green
-        self.plant.update(0.5)  # Complete growth
+        # Mature should be solid green
+        self.plant.update(self.plant.state_manager.GROWTH_THRESHOLD)  # Complete growth
         self.assertEqual(self.plant.state_manager.state, PlantState.MATURE)
-        self.assertEqual(self.plant.state_manager.color_factor, 1.0)
+        self.assertEqual(self.plant.base_color, MOCK_COLORS['MATURE'])
         
-        # Dying should transition back to brown
-        self.plant.update(self.plant.state_manager.MATURE_MAX_TIME + 0.1)  # Start dying
-        self.plant.update(self.plant.state_manager.DYING_DURATION / 2)  # Half dead
+        # Start dying
+        self.plant.update(self.plant.state_manager.MATURE_MAX_TIME + 0.1)
         self.assertEqual(self.plant.state_manager.state, PlantState.DYING)
-        self.assertLess(self.plant.state_manager.color_factor, 1.0)
+        self.assertEqual(self.plant.base_color, MOCK_COLORS['DYING'])
 
     def assertColorCloserTo(self, color, target, other):
         """Assert that color is closer to target than to other color."""

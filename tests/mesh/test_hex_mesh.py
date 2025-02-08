@@ -66,11 +66,14 @@ class TestHexMesh(unittest.TestCase):
 
     def test_update_propagation(self):
         """Test that update calls are propagated to all hexagons."""
-        # First update - transition from SEED to GROWING
+        # First update - should stay in seed state
         self.mesh.update(0.1)
         
-        # Second update - allow for growth
-        self.mesh.update(0.5)
+        # Second update - transition to growing
+        self.mesh.update(2.0)  # SEED_DURATION
+        
+        # Third update - allow for growth
+        self.mesh.update(1.5)  # Half of GROWTH_THRESHOLD
         
         # Check that all plant hexagons have been updated
         plant_count = 0

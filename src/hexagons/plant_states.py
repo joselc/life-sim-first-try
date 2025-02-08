@@ -34,7 +34,8 @@ class PlantStateManager:
     """
     
     # State transition thresholds
-    GROWTH_THRESHOLD = 1.0  # Time needed to reach mature state
+    SEED_DURATION = 2.0     # Time to stay in seed state
+    GROWTH_THRESHOLD = 3.0  # Time needed to reach mature state
     MATURE_MAX_TIME = 5.0   # Maximum time before dying starts
     DYING_DURATION = 3.0    # How long it takes to die
     
@@ -54,9 +55,10 @@ class PlantStateManager:
         self.time_in_state += dt
         
         if self.state == PlantState.SEED:
-            # Start growing immediately
-            self.state = PlantState.GROWING
-            self.time_in_state = 0.0
+            # Stay in seed state for SEED_DURATION
+            if self.time_in_state >= self.SEED_DURATION:
+                self.state = PlantState.GROWING
+                self.time_in_state = 0.0
             
         elif self.state == PlantState.GROWING:
             # Update growth progress

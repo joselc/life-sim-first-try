@@ -43,8 +43,15 @@ class PygameRenderer(BaseRenderer):
             hexagon (Renderable): The hexagon to draw
             show_grid (bool, optional): Whether to show grid lines. Defaults to True.
         """
-        # Draw the filled hexagon
-        pygame.draw.polygon(self.screen, hexagon.color, hexagon.points, 0)
+        # Draw the base hexagon
+        pygame.draw.polygon(self.screen, hexagon.base_color, hexagon.points, 0)
+        
+        # Draw any additional details
+        if hasattr(hexagon, 'detail_color') and hasattr(hexagon, 'detail_radius'):
+            center = (int(hexagon.cx), int(hexagon.cy))
+            radius = int(hexagon.a * hexagon.detail_radius)
+            if radius > 0:
+                pygame.draw.circle(self.screen, hexagon.detail_color, center, radius)
         
         # Draw the grid lines if enabled
         if show_grid:

@@ -17,33 +17,37 @@ class TestPlantStateManager(unittest.TestCase):
         self.assertEqual(self.manager.growth, 0.0)
 
     def test_seed_to_growing_transition(self):
-        """Test immediate transition from seed to growing state."""
+        """Test transition from seed to growing state after SEED_DURATION."""
         self.assertEqual(self.manager.state, PlantState.SEED)
+        # Update with less than SEED_DURATION
         self.manager.update(0.1)
+        self.assertEqual(self.manager.state, PlantState.SEED)
+        # Update past SEED_DURATION
+        self.manager.update(self.manager.SEED_DURATION)
         self.assertEqual(self.manager.state, PlantState.GROWING)
         self.assertEqual(self.manager.time_in_state, 0.0)
 
     def test_growth_progression(self):
         """Test that growth progresses correctly over time."""
-        # Start growing
-        self.manager.update(0.1)
+        # Get to growing state
+        self.manager.update(self.manager.SEED_DURATION + 0.1)
         self.assertEqual(self.manager.state, PlantState.GROWING)
 
         # Partial growth
-        self.manager.update(0.5)  # Half of GROWTH_THRESHOLD
+        self.manager.update(self.manager.GROWTH_THRESHOLD / 2)
         self.assertEqual(self.manager.state, PlantState.GROWING)
         self.assertAlmostEqual(self.manager.growth, 0.5, places=2)
 
         # Complete growth
-        self.manager.update(0.5)  # Rest of GROWTH_THRESHOLD
+        self.manager.update(self.manager.GROWTH_THRESHOLD / 2)
         self.assertEqual(self.manager.state, PlantState.MATURE)
         self.assertEqual(self.manager.growth, 1.0)
 
     def test_mature_to_dying_transition(self):
         """Test transition from mature to dying state."""
         # Get to mature state
-        self.manager.update(0.1)  # Seed -> Growing
-        self.manager.update(1.0)  # Complete growth
+        self.manager.update(self.manager.SEED_DURATION + 0.1)  # Seed -> Growing
+        self.manager.update(self.manager.GROWTH_THRESHOLD)  # Complete growth
         self.assertEqual(self.manager.state, PlantState.MATURE)
 
         # Not enough time passed for dying
@@ -57,8 +61,8 @@ class TestPlantStateManager(unittest.TestCase):
     def test_dying_progression(self):
         """Test that health decreases correctly while dying."""
         # Get to dying state
-        self.manager.update(0.1)  # Seed -> Growing
-        self.manager.update(1.0)  # Complete growth
+        self.manager.update(self.manager.SEED_DURATION + 0.1)  # Seed -> Growing
+        self.manager.update(self.manager.GROWTH_THRESHOLD)  # Complete growth
         self.manager.update(self.manager.MATURE_MAX_TIME + 0.1)  # Start dying
         self.assertEqual(self.manager.state, PlantState.DYING)
         self.assertEqual(self.manager.health, 1.0)
@@ -78,12 +82,12 @@ class TestPlantStateManager(unittest.TestCase):
         self.assertEqual(self.manager.color_factor, 0.0)
 
         # Growing state
-        self.manager.update(0.1)  # Seed -> Growing
-        self.manager.update(0.5)  # Half growth
+        self.manager.update(self.manager.SEED_DURATION + 0.1)  # Start growing
+        self.manager.update(self.manager.GROWTH_THRESHOLD / 2)  # Half growth
         self.assertAlmostEqual(self.manager.color_factor, 0.5, places=2)
 
         # Mature state
-        self.manager.update(0.5)  # Complete growth
+        self.manager.update(self.manager.GROWTH_THRESHOLD / 2)  # Complete growth
         self.assertEqual(self.manager.color_factor, 1.0)
 
         # Dying state
@@ -100,16 +104,16 @@ class TestPlantStateManager(unittest.TestCase):
         # Time in seed state
         initial_time = 0.5
         self.manager.update(initial_time)
-        self.assertEqual(self.manager.time_in_state, 0.0)  # Reset on transition
+        self.assertEqual(self.manager.time_in_state, initial_time)
 
-        # Time in growing state
+        # Time in growing state (after transition)
+        self.manager.update(self.manager.SEED_DURATION)  # Trigger transition
+        self.assertEqual(self.manager.time_in_state, 0.0)  # Should reset after transition
+
+        # Accumulate more time
         growth_time = 0.3
         self.manager.update(growth_time)
         self.assertEqual(self.manager.time_in_state, growth_time)
-
-        # Accumulate more time
-        self.manager.update(growth_time)
-        self.assertEqual(self.manager.time_in_state, growth_time * 2)
 
     def test_state_sequence(self):
         """Test that states always follow the correct sequence."""
@@ -123,7 +127,7 @@ class TestPlantStateManager(unittest.TestCase):
             if current_state != last_state:
                 states_seen.append(current_state)
                 last_state = current_state
-            self.manager.update(0.2)  # Smaller time step for more controlled transitions
+            self.manager.update(0.5)  # Larger time step for quicker transitions
 
         # Add final state
         if self.manager.state not in states_seen:
