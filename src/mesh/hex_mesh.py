@@ -2,7 +2,7 @@
 
 import math
 import random
-from typing import List, Union
+from typing import List, Union, Tuple
 from ..hexagons.plant import PlantHexagon
 from ..hexagons.ground import GroundHexagon
 from ..config import PLANT_SPAWN_PROBABILITY
@@ -57,27 +57,32 @@ class HexMesh:
                 
                 self.hexagons.append(hexagon)
 
-    def _convert_to_ground(self, index: int, plant: PlantHexagon) -> None:
-        """Convert a dead plant to ground.
+    def _convert_plants_to_ground(self, dead_plants: List[Tuple[int, PlantHexagon]]) -> None:
+        """Convert multiple dead plants to ground hexagons in bulk.
         
         Args:
-            index (int): Index of the plant in the hexagons list
-            plant (PlantHexagon): The plant hexagon to convert
+            dead_plants (List[Tuple[int, PlantHexagon]]): List of (index, plant) pairs to convert
         """
-        ground = GroundHexagon(plant.cx, plant.cy, plant.a)
-        self.hexagons[index] = ground
+        for index, plant in dead_plants:
+            self.hexagons[index] = GroundHexagon(plant.cx, plant.cy, plant.a)
 
     def update(self, t: float) -> None:
         """Update all cells in the grid.
 
-        Updates each cell and converts dead plants to ground.
+        Updates each cell and converts dead plants to ground in bulk.
 
         Args:
             t (float): Current simulation time in seconds
         """
-        for i, hexagon in enumerate(self.hexagons):
+        # First update all hexagons
+        for hexagon in self.hexagons:
             hexagon.update(t)
-            
-            # Convert dead plants to ground
-            if isinstance(hexagon, PlantHexagon) and hexagon.state_manager.state == PlantState.DEAD:
-                self._convert_to_ground(i, hexagon) 
+        
+        # Then identify and convert dead plants in bulk
+        dead_plants = [
+            (i, hexagon) for i, hexagon in enumerate(self.hexagons)
+            if isinstance(hexagon, PlantHexagon) and hexagon.state_manager.state == PlantState.DEAD
+        ]
+        
+        if dead_plants:
+            self._convert_plants_to_ground(dead_plants) 
