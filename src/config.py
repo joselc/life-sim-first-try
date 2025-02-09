@@ -12,6 +12,7 @@ Constants:
     GRID_COLUMNS (int): Number of columns in the hexagonal grid
     GRID_ROWS (int): Number of rows in the hexagonal grid
     PLANT_SPAWN_PROBABILITY (float): Probability (0-1) of spawning a plant cell
+    SEED_SURVIVAL_THRESHOLD (float): Default probability (0-1) of a seed surviving
     
     COLORS (Dict[str, Tuple[int, int, int]]): Dictionary of RGB color definitions
         for various elements in the simulation
@@ -27,6 +28,7 @@ BACKGROUND_COLOR = (30, 30, 30)
 GRID_COLUMNS = 16
 GRID_ROWS = 12
 PLANT_SPAWN_PROBABILITY = 0.5
+SEED_SURVIVAL_THRESHOLD = 0.7  # 70% chance of survival by default
 
 # Colors
 COLORS = {

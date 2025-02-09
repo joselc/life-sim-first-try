@@ -3,6 +3,7 @@
 import unittest
 import pygame
 import time
+import random
 from unittest.mock import patch
 from src.mesh.hex_mesh import HexMesh
 from src.game_state import GameStateManager, GameState
@@ -19,6 +20,8 @@ from tests.test_config import (
 class TestGameIntegration(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
+        # Set fixed seed for consistent plant generation
+        random.seed(12345)
         pygame.init()
         self.renderer = PygameRenderer()
         self.renderer.setup(MOCK_SCREEN_WIDTH, MOCK_SCREEN_HEIGHT)
@@ -203,6 +206,8 @@ class TestGameIntegration(unittest.TestCase):
     def tearDown(self):
         """Clean up after each test method."""
         self.renderer.cleanup()
+        # Reset random seed
+        random.seed()
 
 
 if __name__ == '__main__':

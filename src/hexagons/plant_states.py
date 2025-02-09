@@ -1,6 +1,8 @@
 """Plant states and state management for the life simulation."""
 
 from enum import Enum, auto
+import random
+from ..config import SEED_SURVIVAL_THRESHOLD
 
 
 class PlantState(Enum):
@@ -31,6 +33,7 @@ class PlantStateManager:
         time_in_state (float): How long the plant has been in current state
         health (float): Plant's health from 0.0 to 1.0
         growth (float): Plant's growth progress from 0.0 to 1.0
+        seed_survival_threshold (float): Probability (0-1) of a seed surviving to growing phase
     """
     
     # State transition thresholds
@@ -45,6 +48,38 @@ class PlantStateManager:
         self.time_in_state = 0.0
         self.health = 1.0
         self.growth = 0.0
+        self.seed_survival_threshold = SEED_SURVIVAL_THRESHOLD
+    
+    @property
+    def seed_survival_threshold(self) -> float:
+        """Get the probability threshold for seed survival.
+        
+        Returns:
+            float: The probability (0-1) that a seed will survive to growing phase
+        """
+        return self._seed_survival_threshold
+
+    @seed_survival_threshold.setter
+    def seed_survival_threshold(self, value: float) -> None:
+        """Set the seed survival threshold.
+        
+        Args:
+            value (float): The new threshold value (0-1)
+            
+        Raises:
+            ValueError: If value is not between 0 and 1
+        """
+        if not 0 <= value <= 1:
+            raise ValueError("Seed survival threshold must be between 0 and 1")
+        self._seed_survival_threshold = value
+
+    def _check_seed_survival(self) -> bool:
+        """Check if the seed survives to growing phase.
+        
+        Returns:
+            bool: True if the seed survives, False if it dies
+        """
+        return random.random() < self.seed_survival_threshold
     
     def update(self, dt: float) -> None:
         """Update the plant's state based on time passed.
@@ -55,9 +90,13 @@ class PlantStateManager:
         self.time_in_state += dt
         
         if self.state == PlantState.SEED:
-            # Stay in seed state for SEED_DURATION
+            # Check for state transition at the end of seed phase
             if self.time_in_state >= self.SEED_DURATION:
-                self.state = PlantState.GROWING
+                # Determine if seed survives
+                if self._check_seed_survival():
+                    self.state = PlantState.GROWING
+                else:
+                    self.state = PlantState.DYING
                 self.time_in_state = 0.0
             
         elif self.state == PlantState.GROWING:
