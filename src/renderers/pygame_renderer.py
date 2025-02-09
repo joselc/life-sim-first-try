@@ -55,13 +55,13 @@ class PygameRenderer(BaseRenderer):
             
             # Special handling for flowering state
             if hasattr(hexagon, 'state_manager') and hexagon.state_manager.state == PlantState.FLOWERING:
-                # Calculate three points in a triangle pattern
-                angle = math.pi / 6  # 30 degrees
-                distance = hexagon.a * 0.4  # Distance from center
+                # Use the plant's flower angle and orbit radius for dynamic positioning
+                base_angle = getattr(hexagon, 'flower_angle', 0)
+                distance = hexagon.a * hexagon.FLOWER_ORBIT_RADIUS
                 
                 # Calculate three points at 120 degrees apart
                 for i in range(3):
-                    theta = angle + (i * 2 * math.pi / 3)  # 120 degrees apart
+                    theta = base_angle + (i * 2 * math.pi / 3)  # 120 degrees apart
                     x = int(hexagon.cx + distance * math.cos(theta))
                     y = int(hexagon.cy + distance * math.sin(theta))
                     pygame.draw.circle(self.screen, hexagon.detail_color, (x, y), radius)
