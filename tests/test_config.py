@@ -19,5 +19,6 @@ MOCK_COLORS = {
     'MATURE': (34, 139, 34),     # Forest green for mature plants
     'DYING': (205, 133, 63),     # Peru brown for dying plants
     'DEAD': (139, 69, 19),       # Same as ground color
-    'YELLOW': (255, 215, 0)      # Gold color for seed dots
+    'YELLOW': (255, 215, 0),     # Gold color for seed dots
+    'FLOWER': (255, 0, 0)        # Red color for flower dots
 } 

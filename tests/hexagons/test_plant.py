@@ -44,6 +44,7 @@ class TestPlantHexagon(unittest.TestCase):
             PlantState.SEED: MOCK_COLORS['BROWN'],
             PlantState.GROWING: MOCK_COLORS['BROWN'],
             PlantState.MATURE: MOCK_COLORS['MATURE'],
+            PlantState.FLOWERING: MOCK_COLORS['MATURE'],  # Should keep mature color as background
             PlantState.DYING: MOCK_COLORS['DYING'],
             PlantState.DEAD: MOCK_COLORS['DEAD']
         }
@@ -62,6 +63,7 @@ class TestPlantHexagon(unittest.TestCase):
         state_color_map = {
             PlantState.SEED: MOCK_COLORS['YELLOW'],
             PlantState.GROWING: MOCK_COLORS['GROWING'],
+            PlantState.FLOWERING: MOCK_COLORS['FLOWER'],  # Red color for flower dots
             PlantState.MATURE: (0, 0, 0),  # Black (invisible)
             PlantState.DYING: (0, 0, 0),   # Black (invisible)
             PlantState.DEAD: (0, 0, 0)     # Black (invisible)
@@ -81,6 +83,7 @@ class TestPlantHexagon(unittest.TestCase):
         state_radius_map = {
             PlantState.SEED: self.plant.SEED_DOT_RADIUS,
             PlantState.GROWING: self.plant.GROWING_DOT_RADIUS,
+            PlantState.FLOWERING: self.plant.FLOWER_DOT_RADIUS,
             PlantState.MATURE: 0.0,
             PlantState.DYING: 0.0,
             PlantState.DEAD: 0.0

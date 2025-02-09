@@ -3,6 +3,7 @@
 import unittest
 import pygame
 from src.game_state import GameStateManager, GameState
+from src import i18n
 
 
 class TestGameStateManager(unittest.TestCase):
@@ -10,6 +11,8 @@ class TestGameStateManager(unittest.TestCase):
         """Set up test fixtures before each test method."""
         pygame.init()
         self.manager = GameStateManager()
+        # Store initial language
+        self.initial_language = i18n.get_current_language()
 
     def test_initial_state(self):
         """Test that game state manager initializes with correct values."""
@@ -145,8 +148,71 @@ class TestGameStateManager(unittest.TestCase):
         event = pygame.event.Event(pygame.MOUSEBUTTONDOWN)
         self.assertFalse(self.manager.handle_input(event))
 
+    def test_language_toggle_handling(self):
+        """Test language toggle functionality."""
+        # Get initial language and available languages
+        initial_lang = i18n.get_current_language()
+        languages = i18n.get_available_languages()
+        next_lang = languages[(languages.index(initial_lang) + 1) % len(languages)]
+        
+        # Store initial control text for comparison
+        initial_pause_control = self.manager.controls[0][1]  # Get the pause control description
+        
+        # Test language toggle
+        event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_l})
+        self.manager.handle_input(event)
+        
+        # Verify language changed
+        self.assertEqual(i18n.get_current_language(), next_lang)
+        
+        # Verify controls were updated - the text should be different in the new language
+        self.assertNotEqual(self.manager.controls[0][1], initial_pause_control)
+        
+        # Verify the new control text matches the expected translation
+        expected_pause_text = i18n.get_string('controls.pause')
+        self.assertEqual(self.manager.controls[0][1], expected_pause_text)
+
+    def test_speed_adjustment_keys(self):
+        """Test speed adjustment with keyboard keys."""
+        initial_speed = self.manager.simulation_speed
+        
+        # Test speed increase with plus key
+        plus_event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_PLUS})
+        self.manager.handle_input(plus_event)
+        self.assertGreater(self.manager.simulation_speed, initial_speed)
+        
+        # Test speed increase with keypad plus
+        kp_plus_event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_KP_PLUS})
+        self.manager.handle_input(kp_plus_event)
+        self.assertGreater(self.manager.simulation_speed, initial_speed + 0.1)
+        
+        # Test speed decrease with minus key
+        minus_event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_MINUS})
+        self.manager.handle_input(minus_event)
+        self.assertLess(self.manager.simulation_speed, initial_speed + 0.2)
+        
+        # Test speed decrease with keypad minus
+        kp_minus_event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_KP_MINUS})
+        self.manager.handle_input(kp_minus_event)
+        self.assertLess(self.manager.simulation_speed, initial_speed + 0.1)
+
+    def test_grid_toggle_key(self):
+        """Test grid toggle with G key."""
+        initial_grid = self.manager.show_grid
+        
+        # Test grid toggle with G key
+        event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_g})
+        self.manager.handle_input(event)
+        self.assertNotEqual(self.manager.show_grid, initial_grid)
+        
+        # Test toggle back
+        self.manager.handle_input(event)
+        self.assertEqual(self.manager.show_grid, initial_grid)
+
     def tearDown(self):
         """Clean up after each test method."""
+        # Restore initial language
+        i18n.switch_language(self.initial_language)
         pygame.quit()
 
 
