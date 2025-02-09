@@ -6,6 +6,7 @@ from typing import List, Union
 from ..hexagons.plant import PlantHexagon
 from ..hexagons.ground import GroundHexagon
 from ..config import PLANT_SPAWN_PROBABILITY
+from ..hexagons.plant_states import PlantState
 
 
 class HexMesh:
@@ -56,11 +57,27 @@ class HexMesh:
                 
                 self.hexagons.append(hexagon)
 
+    def _convert_to_ground(self, index: int, plant: PlantHexagon) -> None:
+        """Convert a dead plant to ground.
+        
+        Args:
+            index (int): Index of the plant in the hexagons list
+            plant (PlantHexagon): The plant hexagon to convert
+        """
+        ground = GroundHexagon(plant.cx, plant.cy, plant.a)
+        self.hexagons[index] = ground
+
     def update(self, t: float) -> None:
         """Update all cells in the grid.
+
+        Updates each cell and converts dead plants to ground.
 
         Args:
             t (float): Current simulation time in seconds
         """
-        for hexagon in self.hexagons:
-            hexagon.update(t) 
+        for i, hexagon in enumerate(self.hexagons):
+            hexagon.update(t)
+            
+            # Convert dead plants to ground
+            if isinstance(hexagon, PlantHexagon) and hexagon.state_manager.state == PlantState.DEAD:
+                self._convert_to_ground(i, hexagon) 

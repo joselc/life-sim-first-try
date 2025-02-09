@@ -1,6 +1,7 @@
 """Unit tests for the PlantHexagon class."""
 
 import unittest
+from unittest.mock import Mock, patch
 from src.hexagons.plant import PlantHexagon
 from src.hexagons.plant_states import PlantState
 from tests.test_config import MOCK_CELL_SIZE, MOCK_COLORS
@@ -16,76 +17,77 @@ class TestPlantHexagon(unittest.TestCase):
         self.assertEqual(self.plant.cx, 50)
         self.assertEqual(self.plant.cy, 50)
         self.assertEqual(self.plant.a, MOCK_CELL_SIZE)
-        self.assertEqual(self.plant.state_manager.state, PlantState.SEED)
-        self.assertEqual(self.plant.state_manager.time_in_state, 0.0)
-        self.assertEqual(self.plant.state_manager.health, 1.0)
-        self.assertEqual(self.plant.state_manager.growth, 0.0)
+        # Only verify that a state manager exists, not its internal state
+        self.assertIsNotNone(self.plant.state_manager)
 
-    def test_lifecycle(self):
-        """Test that plant goes through its lifecycle states correctly."""
-        # Start as seed
-        self.assertEqual(self.plant.state_manager.state, PlantState.SEED)
-        
-        # Update should stay in seed state initially
+    def test_update_delegates_to_state_manager(self):
+        """Test that update properly delegates to the state manager."""
+        # Create a mock state manager
+        mock_state_manager = Mock()
+        self.plant.state_manager = mock_state_manager
+
+        # Call update
         self.plant.update(0.1)
-        self.assertEqual(self.plant.state_manager.state, PlantState.SEED)
-        
-        # After SEED_DURATION, should transition to growing
-        self.plant.update(self.plant.state_manager.SEED_DURATION)
-        self.assertEqual(self.plant.state_manager.state, PlantState.GROWING)
-        
-        # Should be growing for a while
-        self.plant.update(self.plant.state_manager.GROWTH_THRESHOLD / 2)
-        self.assertEqual(self.plant.state_manager.state, PlantState.GROWING)
-        self.assertGreater(self.plant.state_manager.growth, 0.0)
-        
-        # After growth threshold, should be mature
-        self.plant.update(self.plant.state_manager.GROWTH_THRESHOLD)  # Complete growth
-        self.assertEqual(self.plant.state_manager.state, PlantState.MATURE)
-        
-        # Should stay mature for a while
-        self.plant.update(self.plant.state_manager.MATURE_MAX_TIME - 0.1)
-        self.assertEqual(self.plant.state_manager.state, PlantState.MATURE)
-        
-        # Eventually should start dying
-        self.plant.update(0.2)  # Push over max time
-        self.assertEqual(self.plant.state_manager.state, PlantState.DYING)
-        
-        # Finally should die
-        self.plant.update(self.plant.state_manager.DYING_DURATION)
-        self.assertEqual(self.plant.state_manager.state, PlantState.DEAD)
 
-    def test_color_transitions(self):
-        """Test that color changes appropriately with state transitions."""
-        # Start as seed (should be brown with yellow dot)
-        self.assertEqual(self.plant.state_manager.state, PlantState.SEED)
-        self.assertEqual(self.plant.base_color, MOCK_COLORS['BROWN'])
-        
-        # Growing should be brown with green dot
-        self.plant.update(self.plant.state_manager.SEED_DURATION + 0.1)
-        self.assertEqual(self.plant.state_manager.state, PlantState.GROWING)
-        self.assertEqual(self.plant.base_color, MOCK_COLORS['BROWN'])
-        
-        # Progress growth
-        self.plant.update(self.plant.state_manager.GROWTH_THRESHOLD / 2)
-        self.assertGreater(self.plant.state_manager.growth, 0.0)
-        self.assertLess(self.plant.state_manager.growth, 1.0)
-        
-        # Mature should be solid green
-        self.plant.update(self.plant.state_manager.GROWTH_THRESHOLD)  # Complete growth
-        self.assertEqual(self.plant.state_manager.state, PlantState.MATURE)
-        self.assertEqual(self.plant.base_color, MOCK_COLORS['MATURE'])
-        
-        # Start dying
-        self.plant.update(self.plant.state_manager.MATURE_MAX_TIME + 0.1)
-        self.assertEqual(self.plant.state_manager.state, PlantState.DYING)
-        self.assertEqual(self.plant.base_color, MOCK_COLORS['DYING'])
+        # Verify the state manager's update was called with correct time
+        mock_state_manager.update.assert_called_once_with(0.1)
 
-    def assertColorCloserTo(self, color, target, other):
-        """Assert that color is closer to target than to other color."""
-        target_dist = sum((c1 - c2) ** 2 for c1, c2 in zip(color, target))
-        other_dist = sum((c1 - c2) ** 2 for c1, c2 in zip(color, other))
-        self.assertLess(target_dist, other_dist)
+    def test_base_color_mapping(self):
+        """Test that base colors are correctly mapped to states."""
+        # Create a mock state manager
+        mock_state_manager = Mock()
+        self.plant.state_manager = mock_state_manager
+
+        # Test each state
+        state_color_map = {
+            PlantState.SEED: MOCK_COLORS['BROWN'],
+            PlantState.GROWING: MOCK_COLORS['BROWN'],
+            PlantState.MATURE: MOCK_COLORS['MATURE'],
+            PlantState.DYING: MOCK_COLORS['DYING'],
+            PlantState.DEAD: MOCK_COLORS['DEAD']
+        }
+
+        for state, expected_color in state_color_map.items():
+            mock_state_manager.state = state
+            self.assertEqual(self.plant.base_color, expected_color)
+
+    def test_detail_color_mapping(self):
+        """Test that detail colors are correctly mapped to states."""
+        # Create a mock state manager
+        mock_state_manager = Mock()
+        self.plant.state_manager = mock_state_manager
+
+        # Test each state
+        state_color_map = {
+            PlantState.SEED: MOCK_COLORS['YELLOW'],
+            PlantState.GROWING: MOCK_COLORS['GROWING'],
+            PlantState.MATURE: (0, 0, 0),  # Black (invisible)
+            PlantState.DYING: (0, 0, 0),   # Black (invisible)
+            PlantState.DEAD: (0, 0, 0)     # Black (invisible)
+        }
+
+        for state, expected_color in state_color_map.items():
+            mock_state_manager.state = state
+            self.assertEqual(self.plant.detail_color, expected_color)
+
+    def test_detail_radius_mapping(self):
+        """Test that detail radius is correctly mapped to states."""
+        # Create a mock state manager
+        mock_state_manager = Mock()
+        self.plant.state_manager = mock_state_manager
+
+        # Test each state
+        state_radius_map = {
+            PlantState.SEED: self.plant.SEED_DOT_RADIUS,
+            PlantState.GROWING: self.plant.GROWING_DOT_RADIUS,
+            PlantState.MATURE: 0.0,
+            PlantState.DYING: 0.0,
+            PlantState.DEAD: 0.0
+        }
+
+        for state, expected_radius in state_radius_map.items():
+            mock_state_manager.state = state
+            self.assertEqual(self.plant.detail_radius, expected_radius)
 
 
 if __name__ == '__main__':

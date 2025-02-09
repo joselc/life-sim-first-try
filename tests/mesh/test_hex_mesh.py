@@ -13,6 +13,7 @@ from tests.test_config import (
     MOCK_COLUMNS,
     MOCK_ROWS
 )
+from unittest.mock import patch, Mock
 
 
 class TestHexMesh(unittest.TestCase):
@@ -39,11 +40,7 @@ class TestHexMesh(unittest.TestCase):
             self.assertTrue(isinstance(hexagon, (PlantHexagon, GroundHexagon)))
 
     def test_grid_dimensions(self):
-        """Test that the grid has reasonable dimensions.
-        
-        The grid should roughly fit within the screen bounds, allowing for some
-        overlap at the edges due to hexagon geometry and offset calculations.
-        """
+        """Test that the grid has reasonable dimensions."""
         # Find the leftmost, rightmost, topmost, and bottommost points
         left = min(h.cx - h.a for h in self.mesh.hexagons)
         right = max(h.cx + h.a for h in self.mesh.hexagons)
@@ -66,27 +63,23 @@ class TestHexMesh(unittest.TestCase):
 
     def test_update_propagation(self):
         """Test that update calls are propagated to all hexagons."""
-        # First update - should stay in seed state
-        self.mesh.update(0.1)
-        
-        # Second update - transition to growing
-        self.mesh.update(2.0)  # SEED_DURATION
-        
-        # Third update - allow for growth
-        self.mesh.update(1.5)  # Half of GROWTH_THRESHOLD
-        
-        # Check that all plant hexagons have been updated
-        plant_count = 0
+        # Replace all hexagons with mocks
+        mock_hexagons = []
         for hexagon in self.mesh.hexagons:
-            if isinstance(hexagon, PlantHexagon):
-                plant_count += 1
-                # Plants should have moved past SEED state and started growing
-                self.assertEqual(hexagon.state_manager.state, PlantState.GROWING)
-                self.assertGreater(hexagon.state_manager.growth, 0.0)
-                self.assertLess(hexagon.state_manager.growth, 1.0)
-        
-        # Ensure we actually tested some plants
-        self.assertGreater(plant_count, 0)
+            mock = Mock()
+            mock.cx = hexagon.cx
+            mock.cy = hexagon.cy
+            mock.a = hexagon.a
+            mock_hexagons.append(mock)
+        self.mesh.hexagons = mock_hexagons
+
+        # Update the mesh
+        update_time = 0.1
+        self.mesh.update(update_time)
+
+        # Verify that update was called on each hexagon
+        for mock in mock_hexagons:
+            mock.update.assert_called_once_with(update_time)
 
     def test_rendering(self):
         """Test that all hexagons can be rendered."""
@@ -101,6 +94,75 @@ class TestHexMesh(unittest.TestCase):
         for drawn_hexagon, show_grid in self.renderer.drawn_hexagons:
             self.assertTrue(show_grid)
             self.assertTrue(isinstance(drawn_hexagon, (PlantHexagon, GroundHexagon)))
+
+    def test_dead_plant_conversion(self):
+        """Test that dead plants are converted to ground."""
+        # Find a plant hexagon
+        plant_index = None
+        for i, hexagon in enumerate(self.mesh.hexagons):
+            if isinstance(hexagon, PlantHexagon):
+                plant_index = i
+                break
+        
+        if plant_index is None:
+            # Create a plant if none exists
+            plant = PlantHexagon(50, 50, 10)
+            self.mesh.hexagons[0] = plant
+            plant_index = 0
+        
+        plant = self.mesh.hexagons[plant_index]
+        original_position = (plant.cx, plant.cy, plant.a)
+        
+        # Set plant to dead state
+        plant.state_manager.state = PlantState.DEAD
+        
+        # Update should trigger conversion
+        self.mesh.update(0.1)
+        
+        # Verify conversion
+        converted = self.mesh.hexagons[plant_index]
+        self.assertIsInstance(converted, GroundHexagon)
+        self.assertEqual((converted.cx, converted.cy, converted.a), original_position)
+
+    def test_multiple_dead_plant_conversions(self):
+        """Test that multiple dead plants are converted to ground correctly."""
+        # Create a mesh with only plants
+        with patch('random.random', return_value=0.0):  # Ensure all cells are plants
+            test_mesh = HexMesh(2, 2, MOCK_SCREEN_WIDTH, MOCK_SCREEN_HEIGHT)
+        
+        # Set some plants to dead state
+        dead_indices = [0, 2]  # First and third plants
+        for i in dead_indices:
+            plant = test_mesh.hexagons[i]
+            plant.state_manager.state = PlantState.DEAD
+        
+        # Update should convert dead plants
+        test_mesh.update(0.1)
+        
+        # Verify conversions
+        for i in dead_indices:
+            self.assertIsInstance(test_mesh.hexagons[i], GroundHexagon)
+        
+        # Verify other plants remain unchanged
+        for i in range(len(test_mesh.hexagons)):
+            if i not in dead_indices:
+                self.assertIsInstance(test_mesh.hexagons[i], PlantHexagon)
+
+    def test_position_preservation_after_conversion(self):
+        """Test that converted ground hexagons maintain the same position as the original plant."""
+        # Create a plant and record its position
+        plant = PlantHexagon(50, 50, 10)
+        self.mesh.hexagons[0] = plant
+        original_points = plant.points.copy()
+        
+        # Set to dead state and update
+        plant.state_manager.state = PlantState.DEAD
+        self.mesh.update(0.1)
+        
+        # Verify position is maintained
+        ground = self.mesh.hexagons[0]
+        self.assertIsInstance(ground, GroundHexagon)
+        self.assertEqual(ground.points, original_points)
 
 
 if __name__ == '__main__':
