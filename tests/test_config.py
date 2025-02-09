@@ -6,8 +6,8 @@ MOCK_SCREEN_HEIGHT = 100
 MOCK_CELL_SIZE = 10
 
 # Mock grid settings
-MOCK_COLUMNS = 3
-MOCK_ROWS = 3
+MOCK_COLUMNS = 8
+MOCK_ROWS = 8
 
 # Mock colors for testing (matching the actual colors from src/config.py)
 MOCK_COLORS = {
@@ -20,5 +20,6 @@ MOCK_COLORS = {
     'DYING': (205, 133, 63),     # Peru brown for dying plants
     'DEAD': (139, 69, 19),       # Same as ground color
     'YELLOW': (255, 215, 0),     # Gold color for seed dots
-    'FLOWER': (255, 0, 0)        # Red color for flower dots
+    'FLOWER': (255, 0, 0),       # Red color for flower dots
+    'WATER': (0, 105, 148)       # Deep blue for water
 } 
