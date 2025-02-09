@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import patch
 from src.hexagons.plant_states import PlantState, PlantStateManager
-from src.config import SEED_SURVIVAL_THRESHOLD
+from src.config import SEED_SURVIVAL_THRESHOLD, PLANT_FLOWERING_PROBABILITY
 
 
 class TestPlantStateManager(unittest.TestCase):
@@ -18,6 +18,7 @@ class TestPlantStateManager(unittest.TestCase):
         self.assertEqual(self.manager.health, 1.0)
         self.assertEqual(self.manager.growth, 0.0)
         self.assertEqual(self.manager.seed_survival_threshold, SEED_SURVIVAL_THRESHOLD)
+        self.assertEqual(self.manager.flowering_probability, PLANT_FLOWERING_PROBABILITY)
 
     def test_seed_survival_check(self):
         """Test that seed survival check works correctly."""
@@ -143,65 +144,60 @@ class TestPlantStateManager(unittest.TestCase):
 
     def test_mature_to_dying_transition(self):
         """Test transition from mature to dying state."""
-        with patch('random.random', return_value=0.5):  # Will survive with default threshold
-            # Get to mature state
-            self.manager.update(self.manager.SEED_DURATION + 0.1)  # Seed -> Growing
-            self.manager.update(self.manager.GROWTH_THRESHOLD)  # Complete growth
-            self.assertEqual(self.manager.state, PlantState.MATURE)
-            self.assertEqual(self.manager.time_in_state, 0.0)
+        # Start in mature state
+        with patch('random.random', return_value=0.9):  # Won't flower
+            self.manager.state = PlantState.MATURE
+            self.manager.time_in_state = self.manager.MATURE_MAX_TIME * 0.8  # Past flowering check
+            self.manager.flowering_probability = 0.3
 
-            # Update with less than MATURE_MAX_TIME
-            self.manager.update(self.manager.MATURE_MAX_TIME / 2)
-            self.assertEqual(self.manager.state, PlantState.MATURE)
-
-            # Update past MATURE_MAX_TIME
-            self.manager.update(self.manager.MATURE_MAX_TIME / 2 + 0.1)
+            # Update past max time
+            self.manager.update(self.manager.MATURE_MAX_TIME * 0.5)  # Push well past max time
             self.assertEqual(self.manager.state, PlantState.DYING)
             self.assertEqual(self.manager.time_in_state, 0.0)
 
     def test_dying_progression(self):
-        """Test that health decreases correctly while dying."""
-        with patch('random.random', return_value=0.5):  # Will survive with default threshold
-            # Get to dying state
-            self.manager.update(self.manager.SEED_DURATION + 0.1)  # Seed -> Growing
-            self.manager.update(self.manager.GROWTH_THRESHOLD)  # Complete growth
-            self.manager.update(self.manager.MATURE_MAX_TIME + 0.1)  # Start dying
-            self.assertEqual(self.manager.state, PlantState.DYING)
-            self.assertEqual(self.manager.health, 1.0)  # Full health at start of dying
+        """Test that dying state progresses correctly."""
+        # Start in dying state
+        self.manager.state = PlantState.DYING
+        self.manager.time_in_state = 0.0
+        self.manager.health = 1.0
 
-            # Update halfway through dying duration
-            self.manager.update(self.manager.DYING_DURATION / 2)
-            self.assertEqual(self.manager.state, PlantState.DYING)
-            self.assertAlmostEqual(self.manager.health, 0.5, places=2)
+        # Update halfway through dying duration
+        self.manager.update(self.manager.DYING_DURATION / 2)
+        self.assertEqual(self.manager.state, PlantState.DYING)
+        self.assertAlmostEqual(self.manager.health, 0.5, places=2)
 
-            # Complete death
-            self.manager.update(self.manager.DYING_DURATION / 2)
-            self.assertEqual(self.manager.state, PlantState.DEAD)
-            self.assertEqual(self.manager.health, 0.0)
+        # Complete death
+        self.manager.update(self.manager.DYING_DURATION / 2)
+        self.assertEqual(self.manager.state, PlantState.DEAD)
+        self.assertEqual(self.manager.health, 0.0)
 
     def test_color_factor(self):
-        """Test that color factor is appropriate for each state."""
-        with patch('random.random', return_value=0.5):  # Will survive with default threshold
-            # Seed state
-            self.assertEqual(self.manager.color_factor, 0.0)
+        """Test that color factor returns correct values for each state."""
+        # Test SEED state
+        self.assertEqual(self.manager.color_factor, 0.0)
 
-            # Growing state
-            self.manager.update(self.manager.SEED_DURATION + 0.1)  # Start growing
-            self.manager.update(self.manager.GROWTH_THRESHOLD / 2)  # Half growth
-            self.assertAlmostEqual(self.manager.color_factor, 0.5, places=2)
+        # Test GROWING state
+        self.manager.state = PlantState.GROWING
+        self.manager.growth = 0.5
+        self.assertEqual(self.manager.color_factor, 0.5)
 
-            # Mature state
-            self.manager.update(self.manager.GROWTH_THRESHOLD / 2)  # Complete growth
-            self.assertEqual(self.manager.color_factor, 1.0)
+        # Test MATURE state
+        self.manager.state = PlantState.MATURE
+        self.assertEqual(self.manager.color_factor, 1.0)
 
-            # Dying state
-            self.manager.update(self.manager.MATURE_MAX_TIME + 0.1)  # Start dying
-            self.manager.update(self.manager.DYING_DURATION / 2)  # Half dead
-            self.assertAlmostEqual(self.manager.color_factor, 0.5, places=2)
+        # Test FLOWERING state
+        self.manager.state = PlantState.FLOWERING
+        self.assertEqual(self.manager.color_factor, 1.0)
 
-            # Dead state
-            self.manager.update(self.manager.DYING_DURATION / 2)  # Complete death
-            self.assertEqual(self.manager.color_factor, 0.0)
+        # Test DYING state
+        self.manager.state = PlantState.DYING
+        self.manager.health = 0.7
+        self.assertEqual(self.manager.color_factor, 0.7)
+
+        # Test DEAD state
+        self.manager.state = PlantState.DEAD
+        self.assertEqual(self.manager.color_factor, 0.0)
 
     def test_time_tracking(self):
         """Test that time in state is tracked correctly."""
@@ -243,6 +239,114 @@ class TestPlantStateManager(unittest.TestCase):
                 PlantState.SEED,
                 PlantState.GROWING,
                 PlantState.MATURE,
+                PlantState.DYING,
+                PlantState.DEAD
+            ]
+
+            self.assertEqual(states_seen, expected_sequence)
+
+    def test_flowering_probability_validation(self):
+        """Test that flowering probability validates input correctly."""
+        # Test valid values
+        valid_values = [0.0, 0.5, 1.0]
+        for value in valid_values:
+            self.manager.flowering_probability = value
+            self.assertEqual(self.manager.flowering_probability, value)
+
+        # Test invalid values
+        invalid_values = [-0.1, 1.1, -1, 2]
+        for value in invalid_values:
+            with self.assertRaises(ValueError):
+                self.manager.flowering_probability = value
+
+    def test_flowering_check(self):
+        """Test that flowering check works correctly."""
+        # Test with random value below threshold (will flower)
+        with patch('random.random', return_value=0.2):
+            self.manager.flowering_probability = 0.3
+            self.assertTrue(self.manager._check_flowering())
+
+        # Test with random value above threshold (won't flower)
+        with patch('random.random', return_value=0.4):
+            self.manager.flowering_probability = 0.3
+            self.assertFalse(self.manager._check_flowering())
+
+    def test_mature_to_flowering_transition(self):
+        """Test transition from mature to flowering state."""
+        # Get to mature state
+        with patch('random.random', return_value=0.5):  # Will survive seed phase
+            self.manager.update(self.manager.SEED_DURATION + 0.1)  # Seed -> Growing
+            self.manager.update(self.manager.GROWTH_THRESHOLD)  # Complete growth
+            self.assertEqual(self.manager.state, PlantState.MATURE)
+
+            # Update to just before flowering check point (75% of mature time)
+            self.manager.update(self.manager.MATURE_MAX_TIME * 0.74)
+            self.assertEqual(self.manager.state, PlantState.MATURE)
+
+            # Update past flowering check point with high probability
+            with patch('random.random', return_value=0.2):  # Will flower
+                self.manager.flowering_probability = 0.3
+                self.manager.update(self.manager.MATURE_MAX_TIME * 0.02)  # Just past check point
+                self.assertEqual(self.manager.state, PlantState.FLOWERING)
+                self.assertEqual(self.manager.time_in_state, 0.0)
+
+    def test_no_flowering_transition(self):
+        """Test that plant can go directly to dying if not flowering."""
+        # Start in mature state
+        with patch('random.random', return_value=0.9):  # Won't flower
+            self.manager.state = PlantState.MATURE
+            self.manager.time_in_state = self.manager.MATURE_MAX_TIME * 0.8  # Past flowering check
+            self.manager.flowering_probability = 0.3
+
+            # Update past max time
+            self.manager.update(self.manager.MATURE_MAX_TIME * 0.5)  # Push well past max time
+            self.assertEqual(self.manager.state, PlantState.DYING)
+            self.assertEqual(self.manager.time_in_state, 0.0)
+
+    def test_flowering_duration(self):
+        """Test that flowering state lasts for the correct duration."""
+        # Get to flowering state
+        with patch('random.random', return_value=0.2):  # Will survive and flower
+            self.manager.flowering_probability = 0.3
+            self.manager.update(self.manager.SEED_DURATION + 0.1)  # Seed -> Growing
+            self.manager.update(self.manager.GROWTH_THRESHOLD)  # Complete growth
+            self.manager.update(self.manager.MATURE_MAX_TIME * 0.76)  # Trigger flowering check
+            self.assertEqual(self.manager.state, PlantState.FLOWERING)
+
+            # Update with less than flowering duration
+            self.manager.update(self.manager.FLOWERING_DURATION * 0.9)
+            self.assertEqual(self.manager.state, PlantState.FLOWERING)
+
+            # Update past flowering duration
+            self.manager.update(self.manager.FLOWERING_DURATION * 0.2)
+            self.assertEqual(self.manager.state, PlantState.DYING)
+
+    def test_flowering_state_sequence(self):
+        """Test that flowering follows the correct state sequence."""
+        with patch('random.random', return_value=0.2):  # Will survive and flower
+            self.manager.flowering_probability = 0.3
+            states_seen = []
+            last_state = None
+
+            # Run through entire lifecycle with smaller time steps
+            while self.manager.state != PlantState.DEAD:
+                current_state = self.manager.state
+                # Only record state when it changes
+                if current_state != last_state:
+                    states_seen.append(current_state)
+                    last_state = current_state
+                self.manager.update(0.5)
+
+            # Add final state if not already recorded
+            if self.manager.state not in states_seen:
+                states_seen.append(PlantState.DEAD)
+
+            # Verify sequence includes flowering
+            expected_sequence = [
+                PlantState.SEED,
+                PlantState.GROWING,
+                PlantState.MATURE,
+                PlantState.FLOWERING,
                 PlantState.DYING,
                 PlantState.DEAD
             ]

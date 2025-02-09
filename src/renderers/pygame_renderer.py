@@ -1,9 +1,11 @@
 """Pygame-specific implementation of the renderer interface."""
 
 import pygame
+import math
 from typing import Tuple
 from .base import BaseRenderer, Renderable
 from ..config import COLORS
+from ..hexagons.plant_states import PlantState
 
 
 class PygameRenderer(BaseRenderer):
@@ -50,7 +52,21 @@ class PygameRenderer(BaseRenderer):
         if hasattr(hexagon, 'detail_color') and hasattr(hexagon, 'detail_radius'):
             center = (int(hexagon.cx), int(hexagon.cy))
             radius = int(hexagon.a * hexagon.detail_radius)
-            if radius > 0:
+            
+            # Special handling for flowering state
+            if hasattr(hexagon, 'state_manager') and hexagon.state_manager.state == PlantState.FLOWERING:
+                # Calculate three points in a triangle pattern
+                angle = math.pi / 6  # 30 degrees
+                distance = hexagon.a * 0.4  # Distance from center
+                
+                # Calculate three points at 120 degrees apart
+                for i in range(3):
+                    theta = angle + (i * 2 * math.pi / 3)  # 120 degrees apart
+                    x = int(hexagon.cx + distance * math.cos(theta))
+                    y = int(hexagon.cy + distance * math.sin(theta))
+                    pygame.draw.circle(self.screen, hexagon.detail_color, (x, y), radius)
+            elif radius > 0:
+                # Draw single dot for other states
                 pygame.draw.circle(self.screen, hexagon.detail_color, center, radius)
         
         # Draw the grid lines if enabled

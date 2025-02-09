@@ -19,6 +19,7 @@ class PlantHexagon(Hexagon):
     # Visual detail constants
     SEED_DOT_RADIUS = 0.15    # Relative to hexagon size
     GROWING_DOT_RADIUS = 0.45  # Relative to hexagon size (increased from 0.3)
+    FLOWER_DOT_RADIUS = 0.12   # Size of flower dots
 
     def __init__(self, cx: float, cy: float, a: float) -> None:
         """Initialize a plant hexagonal cell.
@@ -46,6 +47,8 @@ class PlantHexagon(Hexagon):
         """Get the base color of the hexagon."""
         if self.state_manager.state == PlantState.MATURE:
             return COLORS['MATURE']
+        elif self.state_manager.state == PlantState.FLOWERING:
+            return COLORS['MATURE']  # Keep green background for flowering
         elif self.state_manager.state == PlantState.DYING:
             return COLORS['DYING']
         elif self.state_manager.state == PlantState.DEAD:
@@ -60,6 +63,8 @@ class PlantHexagon(Hexagon):
             return COLORS['YELLOW']  # New color for seed dot
         elif self.state_manager.state == PlantState.GROWING:
             return COLORS['GROWING']
+        elif self.state_manager.state == PlantState.FLOWERING:
+            return COLORS['FLOWER']  # Red color for flower dots
         return (0, 0, 0)  # Black for other states (won't be visible)
 
     @property
@@ -69,4 +74,6 @@ class PlantHexagon(Hexagon):
             return self.SEED_DOT_RADIUS
         elif self.state_manager.state == PlantState.GROWING:
             return self.GROWING_DOT_RADIUS
+        elif self.state_manager.state == PlantState.FLOWERING:
+            return self.FLOWER_DOT_RADIUS
         return 0.0  # No dot for other states 

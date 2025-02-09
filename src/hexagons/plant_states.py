@@ -2,7 +2,7 @@
 
 from enum import Enum, auto
 import random
-from ..config import SEED_SURVIVAL_THRESHOLD
+from ..config import SEED_SURVIVAL_THRESHOLD, PLANT_FLOWERING_PROBABILITY
 
 
 class PlantState(Enum):
@@ -12,12 +12,14 @@ class PlantState(Enum):
         SEED: Initial state, not yet grown
         GROWING: Plant is growing but not mature
         MATURE: Plant is fully grown and healthy
+        FLOWERING: Plant is mature and flowering
         DYING: Plant is losing health and will eventually die
         DEAD: Plant has died and will be replaced by ground
     """
     SEED = auto()
     GROWING = auto()
     MATURE = auto()
+    FLOWERING = auto()
     DYING = auto()
     DEAD = auto()
 
@@ -33,14 +35,16 @@ class PlantStateManager:
         time_in_state (float): How long the plant has been in current state
         health (float): Plant's health from 0.0 to 1.0
         growth (float): Plant's growth progress from 0.0 to 1.0
-        seed_survival_threshold (float): Probability (0-1) of a seed surviving to growing phase
+        seed_survival_threshold (float): Probability (0-1) of a seed surviving
+        flowering_probability (float): Probability (0-1) of a plant flowering
     """
     
     # State transition thresholds
     SEED_DURATION = 2.0     # Time to stay in seed state
     GROWTH_THRESHOLD = 3.0  # Time needed to reach mature state
     MATURE_MAX_TIME = 5.0   # Maximum time before dying starts
-    DYING_DURATION = 3.0    # How long it takes to die
+    FLOWERING_DURATION = MATURE_MAX_TIME  # Time to stay in flowering state
+    DYING_DURATION = 8.0    # How long it takes to die (increased from 3.0)
     
     def __init__(self):
         """Initialize the plant state manager."""
@@ -49,6 +53,8 @@ class PlantStateManager:
         self.health = 1.0
         self.growth = 0.0
         self.seed_survival_threshold = SEED_SURVIVAL_THRESHOLD
+        self.flowering_probability = PLANT_FLOWERING_PROBABILITY
+        self.has_checked_flowering = False  # New flag to track if we've checked for flowering
     
     @property
     def seed_survival_threshold(self) -> float:
@@ -73,6 +79,29 @@ class PlantStateManager:
             raise ValueError("Seed survival threshold must be between 0 and 1")
         self._seed_survival_threshold = value
 
+    @property
+    def flowering_probability(self) -> float:
+        """Get the probability of a plant flowering.
+        
+        Returns:
+            float: The probability (0-1) that a mature plant will flower
+        """
+        return self._flowering_probability
+
+    @flowering_probability.setter
+    def flowering_probability(self, value: float) -> None:
+        """Set the flowering probability.
+        
+        Args:
+            value (float): The new probability value (0-1)
+            
+        Raises:
+            ValueError: If value is not between 0 and 1
+        """
+        if not 0 <= value <= 1:
+            raise ValueError("Flowering probability must be between 0 and 1")
+        self._flowering_probability = value
+
     def _check_seed_survival(self) -> bool:
         """Check if the seed survives to growing phase.
         
@@ -80,6 +109,14 @@ class PlantStateManager:
             bool: True if the seed survives, False if it dies
         """
         return random.random() < self.seed_survival_threshold
+
+    def _check_flowering(self) -> bool:
+        """Check if the plant should start flowering.
+        
+        Returns:
+            bool: True if the plant should flower, False otherwise
+        """
+        return random.random() < self.flowering_probability
     
     def update(self, dt: float) -> None:
         """Update the plant's state based on time passed.
@@ -105,10 +142,24 @@ class PlantStateManager:
             if self.growth >= 1.0:
                 self.state = PlantState.MATURE
                 self.time_in_state = 0.0
+                self.has_checked_flowering = False  # Reset the flag when entering mature state
                 
         elif self.state == PlantState.MATURE:
-            # After max time, start dying
-            if self.time_in_state > self.MATURE_MAX_TIME:
+            # Check for flowering in the last quarter of mature state, but only once
+            if self.time_in_state >= self.MATURE_MAX_TIME * 0.75 and not self.has_checked_flowering:
+                self.has_checked_flowering = True
+                if self._check_flowering():
+                    self.state = PlantState.FLOWERING
+                    self.time_in_state = 0.0
+                    return  # Skip the dying check if we're flowering
+            # After max time, start dying if not flowering
+            if self.time_in_state >= self.MATURE_MAX_TIME:
+                self.state = PlantState.DYING
+                self.time_in_state = 0.0
+
+        elif self.state == PlantState.FLOWERING:
+            # After flowering duration, start dying
+            if self.time_in_state >= self.FLOWERING_DURATION:
                 self.state = PlantState.DYING
                 self.time_in_state = 0.0
                 
@@ -128,7 +179,7 @@ class PlantStateManager:
         """
         if self.state == PlantState.GROWING:
             return self.growth
-        elif self.state == PlantState.MATURE:
+        elif self.state in [PlantState.MATURE, PlantState.FLOWERING]:
             return 1.0
         elif self.state == PlantState.DYING:
             return self.health
