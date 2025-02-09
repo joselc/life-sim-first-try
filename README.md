@@ -18,6 +18,12 @@ A Python-based life simulation using a hexagonal grid system. The simulation dis
   - Mature stage (full green)
   - Dying stage (transitioning to brown)
   - Dead stage (brown)
+- Natural terrain generation:
+  - Ground cells (base terrain)
+  - Water bodies (lakes and ponds)
+    - Connected groups of 4+ hexagons
+    - Up to 30% map coverage
+    - Natural, lake-like shapes
 - Internationalization support (English and Spanish)
 - Configurable simulation speed and grid visibility
 - Smooth animations using Pygame
@@ -78,6 +84,7 @@ life-sim/
 │   │   ├── base.py         # Base hexagon class
 │   │   ├── plant.py        # Plant cell implementation
 │   │   ├── ground.py       # Ground cell implementation
+│   │   ├── water.py        # Water cell implementation
 │   │   └── plant_states.py # Plant lifecycle management
 │   ├── mesh/
 │   │   └── hex_mesh.py     # Hexagonal grid implementation
