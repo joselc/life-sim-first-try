@@ -2,13 +2,36 @@
 
 import unittest
 import pygame
+import math
+from unittest.mock import Mock, patch
 from src.renderers.pygame_renderer import PygameRenderer
+from src.hexagons.plant_states import PlantState
 from tests.renderers.test_base import MockRenderable
 from tests.test_config import (
     MOCK_SCREEN_WIDTH,
     MOCK_SCREEN_HEIGHT,
     MOCK_COLORS
 )
+
+
+class MockFloweringPlant(MockRenderable):
+    """Mock implementation of a flowering plant for testing."""
+    
+    def __init__(self, cx, cy, a, flower_angle=0.0):
+        super().__init__(
+            points=[(0, 0), (10, 0), (10, 10), (0, 10)],
+            color=MOCK_COLORS['FLOWER'],
+            base_color=MOCK_COLORS['MATURE']
+        )
+        self.cx = cx
+        self.cy = cy
+        self.a = a
+        self.flower_angle = flower_angle
+        self.FLOWER_ORBIT_RADIUS = 0.4
+        self.detail_color = MOCK_COLORS['FLOWER']
+        self.detail_radius = 0.12
+        self.state_manager = Mock()
+        self.state_manager.state = PlantState.FLOWERING
 
 
 class TestPygameRenderer(unittest.TestCase):
@@ -90,6 +113,96 @@ class TestPygameRenderer(unittest.TestCase):
         except Exception:
             success = False
         self.assertTrue(success)
+
+    def test_flower_dot_positions(self):
+        """Test that flower dots are positioned correctly."""
+        # Create a flowering plant at the center with a known angle
+        plant = MockFloweringPlant(50, 50, 10, flower_angle=0.0)
+        
+        # Mock pygame.draw.circle to capture the positions where circles are drawn
+        drawn_positions = []
+        def mock_draw_circle(screen, color, pos, radius):
+            drawn_positions.append(pos)
+        
+        with patch('pygame.draw.circle', side_effect=mock_draw_circle):
+            self.renderer.begin_frame()
+            self.renderer.draw_hexagon(plant)
+        
+        # Should have drawn exactly 3 flower dots
+        self.assertEqual(len(drawn_positions), 3)
+        
+        # Calculate expected positions (120 degrees apart)
+        distance = plant.a * plant.FLOWER_ORBIT_RADIUS
+        expected_positions = []
+        for i in range(3):
+            theta = plant.flower_angle + (i * 2 * math.pi / 3)
+            x = int(plant.cx + distance * math.cos(theta))
+            y = int(plant.cy + distance * math.sin(theta))
+            expected_positions.append((x, y))
+        
+        # Verify each drawn position matches expected position
+        for drawn, expected in zip(drawn_positions, expected_positions):
+            self.assertEqual(drawn, expected)
+
+    def test_flower_dot_angles(self):
+        """Test that flower dots maintain correct angular spacing."""
+        # Create a flowering plant with a non-zero angle
+        test_angle = math.pi / 4  # 45 degrees
+        plant = MockFloweringPlant(50, 50, 10, flower_angle=test_angle)
+        
+        drawn_positions = []
+        def mock_draw_circle(screen, color, pos, radius):
+            drawn_positions.append(pos)
+        
+        with patch('pygame.draw.circle', side_effect=mock_draw_circle):
+            self.renderer.begin_frame()
+            self.renderer.draw_hexagon(plant)
+        
+        # Calculate angles between consecutive dots
+        angles = []
+        center = (plant.cx, plant.cy)
+        for i in range(3):
+            pos1 = drawn_positions[i]
+            pos2 = drawn_positions[(i + 1) % 3]
+            
+            # Calculate angles relative to center
+            angle1 = math.atan2(pos1[1] - center[1], pos1[0] - center[0])
+            angle2 = math.atan2(pos2[1] - center[1], pos2[0] - center[0])
+            
+            # Calculate angle difference and normalize to [0, 2π]
+            diff = (angle2 - angle1) % (2 * math.pi)
+            angles.append(diff)
+        
+        # All angles should be approximately 120 degrees (2π/3 radians)
+        # Use places=1 to account for integer rounding effects
+        expected_angle = 2 * math.pi / 3
+        for angle in angles:
+            self.assertAlmostEqual(angle, expected_angle, places=1)
+
+    def test_flower_dot_distance(self):
+        """Test that flower dots maintain correct distance from center."""
+        plant = MockFloweringPlant(50, 50, 10)
+        
+        drawn_positions = []
+        def mock_draw_circle(screen, color, pos, radius):
+            drawn_positions.append(pos)
+        
+        with patch('pygame.draw.circle', side_effect=mock_draw_circle):
+            self.renderer.begin_frame()
+            self.renderer.draw_hexagon(plant)
+        
+        # Calculate expected distance
+        expected_distance = plant.a * plant.FLOWER_ORBIT_RADIUS
+        
+        # Check that each dot is at the correct distance from center
+        # Allow for integer rounding by checking if distance is within 0.5 units
+        center = (plant.cx, plant.cy)
+        for pos in drawn_positions:
+            dx = pos[0] - center[0]
+            dy = pos[1] - center[1]
+            distance = math.sqrt(dx*dx + dy*dy)
+            self.assertLess(abs(distance - expected_distance), 0.5,
+                          f"Distance {distance} differs from expected {expected_distance} by more than 0.5 units")
 
     def tearDown(self):
         """Clean up after each test method."""
