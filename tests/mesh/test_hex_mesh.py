@@ -164,6 +164,150 @@ class TestHexMesh(unittest.TestCase):
         self.assertIsInstance(ground, GroundHexagon)
         self.assertEqual(ground.points, original_points)
 
+    def test_grid_bounds_initialization(self):
+        """Test that grid boundaries are correctly initialized."""
+        # Check that bounds are properly set
+        left, right, top, bottom = self.mesh.grid_bounds
+        
+        # Verify basic bounds properties
+        self.assertLess(left, right)  # Left bound should be less than right
+        self.assertLess(top, bottom)  # Top bound should be less than bottom
+        self.assertEqual(bottom, MOCK_SCREEN_HEIGHT)  # Bottom should match screen height
+        self.assertEqual(top, 0)  # Top should be 0
+        
+        # Verify grid is centered horizontally
+        grid_width = right - left
+        expected_left = (MOCK_SCREEN_WIDTH - grid_width) / 2
+        self.assertAlmostEqual(left, expected_left)
+
+    def test_position_validation_within_bounds(self):
+        """Test that positions within grid bounds are validated correctly."""
+        # Get a known valid position (center of first hexagon)
+        valid_hexagon = self.mesh.hexagons[0]
+        
+        # Test center position
+        self.assertTrue(
+            self.mesh._is_position_valid(valid_hexagon.cx, valid_hexagon.cy),
+            "Center position should be valid"
+        )
+        
+        # Test positions near the edges but within bounds
+        left, right, top, bottom = self.mesh.grid_bounds
+        margin = self.mesh.cell_size / 2
+        
+        # Test various valid positions
+        valid_positions = [
+            (left + margin, top + margin),  # Top-left with margin
+            (right - margin, top + margin),  # Top-right with margin
+            (left + margin, bottom - margin),  # Bottom-left with margin
+            (right - margin, bottom - margin),  # Bottom-right with margin
+            ((left + right) / 2, (top + bottom) / 2),  # Center of grid
+        ]
+        
+        for x, y in valid_positions:
+            self.assertTrue(
+                self.mesh._is_position_valid(x, y),
+                f"Position ({x}, {y}) should be valid"
+            )
+
+    def test_position_validation_outside_bounds(self):
+        """Test that positions outside grid bounds are invalidated correctly."""
+        left, right, top, bottom = self.mesh.grid_bounds
+        margin = self.mesh.cell_size / 2
+        
+        # Test various invalid positions
+        invalid_positions = [
+            (left - margin * 2, top),  # Too far left
+            (right + margin * 2, top),  # Too far right
+            (left, top - margin * 2),  # Too far up
+            (right, bottom + margin * 2),  # Too far down
+            (float('-inf'), 0),  # Extreme left
+            (float('inf'), 0),  # Extreme right
+            (0, float('-inf')),  # Extreme top
+            (0, float('inf')),  # Extreme bottom
+        ]
+        
+        for x, y in invalid_positions:
+            self.assertFalse(
+                self.mesh._is_position_valid(x, y),
+                f"Position ({x}, {y}) should be invalid"
+            )
+
+    def test_convert_invalid_position(self):
+        """Test that converting a plant with invalid position raises ValueError."""
+        # Create a plant with invalid position
+        left, right, top, bottom = self.mesh.grid_bounds
+        invalid_plant = PlantHexagon(
+            left - self.mesh.cell_size * 2,  # Way outside left bound
+            top,
+            self.mesh.cell_size
+        )
+        invalid_plant.state_manager.state = PlantState.DEAD
+        
+        # Try to convert the invalid plant
+        with self.assertRaises(ValueError) as context:
+            self.mesh._convert_plants_to_ground([(0, invalid_plant)])
+        
+        # Verify error message contains position and bounds information
+        error_msg = str(context.exception)
+        self.assertIn("outside grid bounds", error_msg)
+        self.assertIn(str(self.mesh.grid_bounds), error_msg)
+
+    def test_convert_edge_case_positions(self):
+        """Test conversion of plants at edge positions within the margin."""
+        left, right, top, bottom = self.mesh.grid_bounds
+        margin = self.mesh.cell_size / 2
+        
+        # Create plants at edge positions but within margin
+        edge_positions = [
+            (left - margin + 0.1, (top + bottom) / 2),  # Just inside left margin
+            (right + margin - 0.1, (top + bottom) / 2),  # Just inside right margin
+            ((left + right) / 2, top - margin + 0.1),  # Just inside top margin
+            ((left + right) / 2, bottom + margin - 0.1),  # Just inside bottom margin
+        ]
+        
+        for i, (x, y) in enumerate(edge_positions):
+            # Create a plant at the edge position
+            plant = PlantHexagon(x, y, self.mesh.cell_size)
+            plant.state_manager.state = PlantState.DEAD
+            
+            # Verify conversion succeeds
+            try:
+                self.mesh._convert_plants_to_ground([(i, plant)])
+                success = True
+            except ValueError:
+                success = False
+            
+            self.assertTrue(
+                success,
+                f"Conversion should succeed for position ({x}, {y})"
+            )
+
+    def test_bulk_conversion_validation(self):
+        """Test that bulk conversion validates all positions before converting any."""
+        # Create a mix of valid and invalid plants
+        valid_plant = self.mesh.hexagons[0]
+        if not isinstance(valid_plant, PlantHexagon):
+            valid_plant = PlantHexagon(valid_plant.cx, valid_plant.cy, valid_plant.a)
+        
+        left, right, top, bottom = self.mesh.grid_bounds
+        invalid_plant = PlantHexagon(
+            right + self.mesh.cell_size * 2,  # Way outside right bound
+            top,
+            self.mesh.cell_size
+        )
+        
+        # Set both plants as dead
+        valid_plant.state_manager.state = PlantState.DEAD
+        invalid_plant.state_manager.state = PlantState.DEAD
+        
+        # Try to convert both plants
+        with self.assertRaises(ValueError):
+            self.mesh._convert_plants_to_ground([(0, valid_plant), (1, invalid_plant)])
+        
+        # Verify that no conversions took place (the valid plant should not have been converted)
+        self.assertIsInstance(self.mesh.hexagons[0], PlantHexagon)
+
 
 if __name__ == '__main__':
     unittest.main() 
