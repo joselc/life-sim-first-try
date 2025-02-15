@@ -14,6 +14,8 @@ Constants:
     PLANT_SPAWN_PROBABILITY (float): Probability (0-1) of spawning a plant cell
     SEED_SURVIVAL_THRESHOLD (float): Default probability (0-1) of a seed surviving
     PLANT_FLOWERING_PROBABILITY (float): Probability (0-1) of a plant flowering
+    WATER_SPAWN_PROBABILITY (float): Probability (0-1) of initial water hexagon for group formation
+    MAX_WATER_PERCENTAGE (float): Maximum percentage of map can be water
     
     COLORS (Dict[str, Tuple[int, int, int]]): Dictionary of RGB color definitions
         for various elements in the simulation
@@ -31,6 +33,8 @@ GRID_ROWS = 12
 PLANT_SPAWN_PROBABILITY = 0.5
 SEED_SURVIVAL_THRESHOLD = 0.7  # 70% chance of survival by default
 PLANT_FLOWERING_PROBABILITY = 0.3  # 30% chance of flowering by default
+WATER_SPAWN_PROBABILITY = 0.2  # 20% chance of initial water hexagon for group formation
+MAX_WATER_PERCENTAGE = 0.3  # Maximum 30% of map can be water
 
 # Colors
 COLORS = {
@@ -43,5 +47,6 @@ COLORS = {
     'DYING': (205, 133, 63),     # Peru brown for dying plants
     'DEAD': (139, 69, 19),       # Same as ground color
     'YELLOW': (255, 215, 0),     # Gold color for seed dots
-    'FLOWER': (255, 0, 0)        # Red color for flower dots
+    'FLOWER': (255, 0, 0),       # Red color for flower dots
+    'WATER': (0, 105, 148)       # Deep blue for water
 } 
